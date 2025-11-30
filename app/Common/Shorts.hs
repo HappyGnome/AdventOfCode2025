@@ -68,9 +68,9 @@ module Shorts (
 ) where
 
 --import Data.Function
-import Data.List (sortBy, sortOn)
+import Data.List (sortOn)
 --import Data.List.Extra (groupOnKey)
-import Data.Word
+--import Data.Word
 import Data.Time.Clock.System
 import System.Random
 import Debug.Trace

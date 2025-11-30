@@ -38,7 +38,7 @@ import Data.Tuple
 import Data.Tuple.Extra
 -- import Debug.Trace
 
-import GHC.Base
+-- import GHC.Base
 import Shorts
 
 ----------------------------------------------------------------------------------------------

@@ -11,6 +11,13 @@ Set-Content -Path $CabalPath $CabalContent
 # Update main file
 $MainPath = "app/Main.hs"
 Write-Output ("Updating " + $MainPath + "...")
-$MainContent = Get-Content -Path $MainPath -Raw
+$MainContent = Get-Content -Path $MainPath
 $MainContent = $MainContent -replace '(\s)\w+(\.[\w\.]+)? -- <<Current<< ',('$1' + $ModNm + '$2 -- <<Current<< ' )
 Set-Content -Path $MainPath $MainContent
+
+# Update puzzle file
+$PuzPath = "app/Puzzles/Parts/" + $ModNm + ".hs"
+Write-Output ("Updating " + $PuzPath + "...")
+$PuzContent = Get-Content -Path $PuzPath
+$PuzContent = $PuzContent -replace 'A25xx(.*) -- <<Current<<',($ModNm + '$1 -- <<Current<<' )
+Set-Content -Path $PuzPath $PuzContent

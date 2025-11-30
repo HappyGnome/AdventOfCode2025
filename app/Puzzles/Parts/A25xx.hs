@@ -12,7 +12,7 @@ of style and logic. This is a learning project for the author, and has been prep
 {-# OPTIONS_GHC -Wno-unused-matches #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
-module A25xx where
+module A25xx where -- <<Current<<
 
 import Text.Read
 import Data.Maybe
@@ -37,7 +37,7 @@ import ArithEx
 exec :: IO()
 exec = do
     let 
-        inpPathBase ="app/Puzzles/Input/A25xx/" -- Set Challenge number here
+        inpPathBase ="app/Puzzles/Input/A25xx/" -- <<Current<<
         inpPath0 = inpPathBase ++ "Test1.txt"
         inpPath1 = inpPathBase ++ "Input1.txt"
 
