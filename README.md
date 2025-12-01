@@ -29,7 +29,8 @@ Solutions:
 
 * Or... what I did at first:
 ![Bad solution Day 1](docs/images/Day1_bad.png)
-Oh dear!
+
+Oh dear - no prizes today!
 
 
 
