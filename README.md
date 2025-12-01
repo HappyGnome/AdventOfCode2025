@@ -23,14 +23,14 @@ Solutions:
 * You could simulate each 100th of a turn and count (I didn't try it that way, but it would be a much quicker way to code a solution than the below); or
 * you could work out how many times 0 was passed per rotation in the input in a simple way. Here we want to count crossings of 0 when starting at `at` and moving `x` 100ths:
 ![Better solution Day 1](docs/images/Day1_OK.png)
-    * The key is to realise that the formula for the first pattern (`x > 0`) is only correct when `0<= at < 100`
+    * The key is to realise that the formula for the first case (`x > 0`) is only correct when `0 <= at < 100`
     * "Reflecting" the same forumla (`at` -> `100 - at`, `x` -> `-x`) for `x < 0` works, but only when `0 <= 100 - at < 100`
     * So we have to deal with the case `at == 0` separately.
 
 * Or... what I did at first:
 ![Bad solution Day 1](docs/images/Day1_bad.png)
 
-Oh dear - no prizes today!
+Oh dear, better luck tomorrow!
 
 
 
