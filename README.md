@@ -5,7 +5,33 @@ Here are the attempts of [HappyGnome](https://github.com/HappyGnome) to solve th
 Language used: Haskell
 
 # Commentary on solutions
-**TODO**
+
+## Day 1
+
+In [this](https://adventofcode.com/2025/day/1) simple puzzle, we are given a series of rotations of a dial, in 100ths of a turn.
+
+### Part 1
+How many times do we land on 0 after a rotation? 
+
+Solution:
+* Simulate the rotations (simple use of modulo arithmetic) and count...
+
+### Part 2
+How many times do we pass 0?
+
+Solutions:
+* You could simulate each 100th of a turn and count (I didn't try it that way, but it would be a much quicker way to code a solution than the below); or
+* you could work out how many times 0 was passed per rotation in the input in a simple way. Here we want to count crossings of 0 when starting at `at` and moving `x` 100ths:
+![Better solution Day 1](docs/images/Day1_OK.png)
+    * The key is to realise that the formula for the first pattern (`x > 0`) is only correct when `0<= at < 100`
+    * "Reflecting" the same forumla (`at` -> `100 - at`, `x` -> `-x`) for `x < 0` works, but only when `0 <= 100 - at < 100`
+    * So we have to deal with the case `at == 0` separately.
+
+* Or... what I did at first:
+![Bad solution Day 1](docs/images/Day1_bad.png)
+Oh dear!
+
+
 
 # Project structure
 * `NextPuzzle.bat/NextPuzzle.ps1` Used to update the `cabal` and `Main.hs` files each day (run the `.bat`)

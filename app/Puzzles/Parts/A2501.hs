@@ -133,20 +133,16 @@ solve2 plr =
     let 
         jmps = map (uncurry (*)) plr
 
-        passes 0 x =  (abs x) `div` 100
-        passes at x 
-            | x + at > 99 = 1 + passes (at + (min x 100) -100) (x - (min x 100))
-            | x + at < 0 = 1 + passes 0 (x + at)
-            | x + at < 0 =  passes (at + (max x $ -100) + 100) (x + (min (-x) $ 100))
-            | x /=0 && x + at == 0 = 1
+        passes at x
+            | x > 0  = (x + at) `div` 100
+            | at == 0 && x < 0 = (-x) `div` 100
+            | x < 0 = (100 - at - x) `div` 100
             | otherwise = 0
 
         mv (at,tot) x = 
             let 
                 newAt = ( at + x) `mod` 100
-                a = 1
-                b = -100
-                --ps = trace (show (a,b,passes a b)) $ passes at x
+
                 ps =  passes at x
             in
                 (newAt, tot + ps)
