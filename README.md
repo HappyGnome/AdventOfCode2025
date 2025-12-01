@@ -6,6 +6,8 @@ Language used: Haskell
 
 # Commentary on solutions (Spoiler Warning!)
 
+Here are some brief discussions of the key points of the problems and mistakes I made solving them. Comments will be added about problems if/when time permits, and if I think of something worth mentioning.
+
 ## Day 1
 
 In [this](https://adventofcode.com/2025/day/1) simple puzzle, we are given a series of rotations (moves) of a dial, in 100ths of a turn.
