@@ -12,7 +12,7 @@ of style and logic. This is a learning project for the author, and has been prep
 {-# OPTIONS_GHC -Wno-unused-matches #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
-module A2501 where -- <<Current<<
+module A2501 where
 
 import Text.Read
 import Data.Maybe
@@ -37,7 +37,7 @@ import ArithEx
 exec :: IO()
 exec = do
     let 
-        inpPathBase ="app/Puzzles/Input/A2501/" -- <<Current<<
+        inpPathBase ="app/Puzzles/Input/A2501/"
         inpPath0 = inpPathBase ++ "Test1.txt"
         inpPath1 = inpPathBase ++ "Input1.txt"
 
@@ -52,7 +52,7 @@ exec1 :: String -> String -> String -> IO()
 exec1 inpPathBase inpPath0 inpPath1 = do
     let 
         --inpPath2 = inpPathBase ++ "Test2.txt"
-{-@@-} inpPath = inpPath0         -- Choose Test or Input here 
+{-@@-} inpPath = inpPath1         -- Choose Test or Input here 
 
     ls <- IOH.getFileLines inpPath
     printSoln "Part 1" inpPath $ solve1 $ parseLines ls
@@ -63,7 +63,7 @@ exec2 :: String -> String -> String -> IO()
 exec2 inpPathBase inpPath0 inpPath1 = do
     let 
         --inpPath2 = inpPathBase ++ "Test2.txt"
- {-@@-} inpPath = inpPath0         -- Choose Test or Input here 
+ {-@@-} inpPath = inpPath1         -- Choose Test or Input here 
 
     ls <- IOH.getFileLines inpPath
     printSoln "Part 2" inpPath $ solve2 $ parseLines ls
@@ -96,26 +96,68 @@ execDebug inpPathBase inpPath0 inpPath1 = do
 type ParseLineResult = Int --- Best to replace ParseLineResult with the actual type, if it's simple enough.
                             -- Defining this here just to allow us to warm up the compilet on the blank file
 
-parseLines :: [String] -> ParseLineResult
+parseLines :: [String] -> [(Int,Int)]
 parseLines ls = 
-    0
+    let
+        fromCh cs 
+            | cs == "L" = -1
+            | otherwise = 1
+
+        pline cs = 
+            (fromCh [head cs],IOH.readInt $ tail cs)
+
+    in
+        map pline ls
 
 --------------------------------------------------------------------------------------------
 -- Solver
 
-solve1 :: ParseLineResult ->  Maybe Int
+solve1 :: [(Int,Int)] ->  Maybe Int
 solve1 plr =
-    Nothing
+    let 
+        jmps = map (uncurry (*)) plr
 
-solve2 :: ParseLineResult -> Maybe Int
+        mv (at,tot) x = 
+            let 
+                newAt = ( at + x) `mod` 100
+            in
+                if newAt == 0 then
+                    (newAt, tot+1)
+                else
+                    (newAt,tot)
+    in
+        Just $ snd $ foldl mv (50,0) jmps
+
+solve2 :: [(Int,Int)] -> Maybe Int
 solve2 plr = 
-    Nothing
+    let 
+        jmps = map (uncurry (*)) plr
 
-solve3 :: ParseLineResult -> Maybe Int
+        passes 0 x =  (abs x) `div` 100
+        passes at x 
+            | x + at > 99 = 1 + passes (at + (min x 100) -100) (x - (min x 100))
+            | x + at < 0 = 1 + passes 0 (x + at)
+            | x + at < 0 =  passes (at + (max x $ -100) + 100) (x + (min (-x) $ 100))
+            | x /=0 && x + at == 0 = 1
+            | otherwise = 0
+
+        mv (at,tot) x = 
+            let 
+                newAt = ( at + x) `mod` 100
+                a = 1
+                b = -100
+                --ps = trace (show (a,b,passes a b)) $ passes at x
+                ps =  passes at x
+            in
+                (newAt, tot + ps)
+    in
+        Just $ snd $ foldl mv (50,0) jmps
+
+solve3 :: [(Int,Int)] -> Maybe Int
 solve3 plr =
     Nothing
 
-solveDebug :: ParseLineResult ->  IO()
+solveDebug :: [(Int,Int)] ->  IO()
 solveDebug plr = do
     return ()
 --------------------------------------------------------------------------------------------

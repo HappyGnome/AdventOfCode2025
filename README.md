@@ -1,8 +1,11 @@
-# Advent of code 2025 solutions
+# Advent of Code 2025 solutions
 
 Here are the attempts of [HappyGnome](https://github.com/HappyGnome) to solve the puzzles for [Advent of Code](https://adventofcode.com/2025) 2025 by Eric Wastl.
 
 Language used: Haskell
+
+# Commentary on solutions
+**TODO**
 
 # Project structure
 * `NextPuzzle.bat/NextPuzzle.ps1` Used to update the `cabal` and `Main.hs` files each day (run the `.bat`)
@@ -11,9 +14,6 @@ Language used: Haskell
 * `app/Common` contains some implementations of common algorithms and helper methods the author has built up when working on similar problems
 * `app/Puzzles/Input` contains a folder per challenge attempted, each containing input and test inputs
 * `app/Puzzles/Parts` contains one Haskell file (module) per puzzle
-
-# Commentary on solutions
-**TODO**
 
 # Copyright
 Unless otherwise stated, the content of this repo is Copyright (2025) of HappyGnome.

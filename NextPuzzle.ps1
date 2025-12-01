@@ -19,5 +19,5 @@ Set-Content -Path $MainPath $MainContent
 $PuzPath = "app/Puzzles/Parts/" + $ModNm + ".hs"
 Write-Output ("Updating " + $PuzPath + "...")
 $PuzContent = Get-Content -Path $PuzPath
-$PuzContent = $PuzContent -replace 'A25xx(.*) -- <<Current<<',($ModNm + '$1 -- <<Current<<' )
+$PuzContent = $PuzContent -replace 'A25xx(.*) -- <<Current<<',($ModNm + '$1' )
 Set-Content -Path $PuzPath $PuzContent
