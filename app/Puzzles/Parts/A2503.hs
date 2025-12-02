@@ -12,7 +12,7 @@ of style and logic. This is a learning project for the author, and has been prep
 {-# OPTIONS_GHC -Wno-unused-matches #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
-module A25xx where -- <<Current<<
+module A2503 where
 
 import Text.Read
 import Data.Maybe
@@ -35,7 +35,7 @@ import ArithEx
 
 
 
-problemNumber = "A25xx" -- <<Current<<
+problemNumber = "A2503"
 
 -- Entry point. Control which steps to run here
 exec :: IO()
