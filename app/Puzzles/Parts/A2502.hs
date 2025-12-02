@@ -45,6 +45,21 @@ exec = do
     exec2 inpPathBase inpPath0 inpPath1
     execDebug inpPathBase inpPath0 inpPath1
 
+readParseSolve :: (PuzzleSolution b) => String -> String -> ([String] -> a) -> (a -> Maybe b) -> IO()
+readParseSolve name inpPath parse solve = do
+
+    (ls, readTime) <- IOH.runTimedIO IOH.getFileLines inpPath
+
+    let
+        psd =parse ls
+
+        soln = solve psd
+
+    (_,parseSolveTime) <- IOH.runTimedIO (printSoln name inpPath) soln 
+
+    putStrLn $ "Read time: " ++ show readTime ++ "  Parse & Solve: " ++ show parseSolveTime
+
+
 --------------------------
 -- Entry point for Part 1
 exec1 :: String -> String -> String -> IO()
@@ -53,8 +68,7 @@ exec1 inpPathBase inpPath0 inpPath1 = do
         --inpPath2 = inpPathBase ++ "Test2.txt"
 {-@@1-}inpPath = inpPath1         -- Choose Test or Input here 
 
-    ls <- IOH.getFileLines inpPath
-    printSoln "Part 1" inpPath $ solve1 $ parseLines ls
+    readParseSolve "Part 1" inpPath parseLines solve1
 
 --------------------------
 -- Entry point for Part 2
@@ -64,8 +78,7 @@ exec2 inpPathBase inpPath0 inpPath1 = do
         --inpPath2 = inpPathBase ++ "Test2.txt"
  {-@@2-}inpPath = inpPath1         -- Choose Test or Input here 
 
-    ls <- IOH.getFileLines inpPath
-    printSoln "Part 2" inpPath $ solve2 $ parseLines ls
+    readParseSolve "Part 2" inpPath parseLines solve2
 
 --------------------------
 -- Entry point for optional debug ops
@@ -127,7 +140,7 @@ isInvalid2 x =
             where
                 ls' = drop n ls
 
-        testStr ls = any (hasPeriod ls) [1..hflen]
+        testStr ls = any (hasPeriod ls) [hflen,hflen - 1 .. 1] -- Is this any faster than [1 .. hflen]?
             where
                 hflen = length ls `div` 2
 

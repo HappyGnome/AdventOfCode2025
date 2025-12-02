@@ -19,7 +19,9 @@ module IoHelpers (
         , splitLinesOnEmpty
         , renderGrid
         , renderMat
-        ,  loadJust2D ) where
+        , loadJust2D 
+        --, runTimed
+        , runTimedIO) where
 
 import System.Windows.Clipboard
 import qualified Data.Map as Map
@@ -29,6 +31,10 @@ import Text.Printf
 import Data.Maybe as Maybe
 import Data.List.Index
 import Data.Tuple.Extra (secondM)
+import Data.Time.Clock.System
+import Data.Time.Clock
+import Data.Int
+import GHC.Conc
 
 ------------------------------------------------------------------------------
 -- Puzzle solution printing
@@ -108,8 +114,24 @@ renderMat f lss =
         pss = map (concatMap $ rpad mxl ' ') sss
     in
         printf $ unlines pss
-        
 
+---------------------------------------
+-- Timing
+-- runTimed :: (a -> b) -> a -> IO (b,NominalDiffTime)
+-- runTimed f x = do
+--     st <- getCurrentTime
+--     let
+--         y = f x
+--     nd <- y `pseq` getCurrentTime
+--     return (y, diffUTCTime nd st)
+        
+runTimedIO :: (a -> IO b) -> a -> IO (b,NominalDiffTime)
+runTimedIO f x = do
+    st <- getCurrentTime
+    y <- f x
+    nd <- getCurrentTime
+    return (y, diffUTCTime nd st )
+        
 ---------------------------------------
 -- Private
 renderRowInner :: Int -> Int -> (Maybe b -> Char) -> Map.Map (V2 Int) b -> String
