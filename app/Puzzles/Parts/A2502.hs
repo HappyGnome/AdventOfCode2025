@@ -97,16 +97,13 @@ parseLines ls =
 
 solve1 :: [(Int,Int)] ->  Maybe Int
 solve1 plr = -- @@1
-    let
-
-    in
-        Just $ sum $ map invInRange plr
+    Just $ sum $ map invInRange plr --44487518055
         
                 
 
 solve2 :: [(Int,Int)] -> Maybe Int
 solve2 plr = -- @@2
-    Just $ sum $ map invInRange2 plr
+    Just $ sum $ map invInRange2 plr --53481866137
 
 solveDebug :: [(Int,Int)] ->  IO()
 solveDebug plr = do
@@ -114,46 +111,47 @@ solveDebug plr = do
 --------------------------------------------------------------------------------------------
 -- Business
 
--- splitDig x = splitDig' (x,0,1)
--- splitDig' (x,y,z)
---     | x <= y = (x,y)
---     | otherwise = splitDig' (x `div` 10, (x `mod` 10) * z + y, z * 10)
--- 
--- isInvalid x = z == y 
---     where
---         (z,y) = splitDig x
---
-
+isInvalid :: Int -> Bool
 isInvalid x = 
     let
-        (st,nd) = splitAt (length cs `div` 2) $ cs
+        (st,nd) = splitAt (length cs `div` 2) cs
             where
                 cs = show x
     in
         st == nd
 
+isInvalid2 :: Int -> Bool
 isInvalid2 x = 
     let
-
-        testStr cs  = testStr' cs 1
-
-        testStr' cs n
-            | 2*n > length cs = False
-            | all ((==) $ head $ ptsc) ptsc = True
-            | otherwise = testStr' cs (n+1)
+        hasPeriod ls n = (length ls `mod` n == 0) && and (zipWith (==) ls ls')
             where
+                ls' = drop n ls
 
-                ptsc = pts cs
+        testStr ls = any (hasPeriod ls) [1..hflen]
+            where
+                hflen = length ls `div` 2
 
-                pts [] = []
-                pts ds = st : pts nd 
-                    where
-                        (st, nd) = splitAt n ds
+--        testStr cs  = testStr' cs 1
+--
+--        testStr' cs n
+--            | 2*n > length cs = False
+--            | all ((==) $ head ptsc) ptsc = True
+--            | otherwise = testStr' cs (n+1)
+--            where
+--
+--                ptsc = pts cs
+--
+--                pts [] = []
+--                pts ds = st : pts nd 
+--                    where
+--                        (st, nd) = splitAt n ds
 
                 
     in
         testStr $ show x
 
+invInRange :: (Int,Int) -> Int
 invInRange (x,y) = sum $ filter isInvalid [x..y]
 
+invInRange2 :: (Int,Int) -> Int
 invInRange2 (x,y) = sum $ filter isInvalid2 [x..y]
