@@ -17,11 +17,10 @@ In [this](https://adventofcode.com/2025/day/3) puzzle, we are given a list of lo
 **Solution(s):**
 It'll be the same, right? Just make a version of `makeAllPairs` that makes all substrings of length 12...
 
-Something like:
+Something like*:
 
 ![Not a solution - Day 3](images/Day3_bad.png)
 
-(Is there a tail-recursive way to do this?)
 
 Yep, all that's left is to hit run...
 
@@ -35,7 +34,7 @@ Hmmm...
 
 Oh man! Turns out even modern hardware can't check `100 choose 12` substrings in a reasonable time. I can't believe I need [awareness of the performance](https://www.computerenhance.com/p/table-of-contents) of my code in 2025. 
 
-Maybe it would help to have an algorithm that's `O(100)` (where `100` is the length of the whole string, and `12` is fixed)*:
+Maybe it would help to have an algorithm that's `O(100)` (where `100` is the length of the whole string, and `12` is fixed)**:
 
 ![A solution - Day 3](images/Day3_meh.png)
 
@@ -47,4 +46,7 @@ Not very pretty (and maybe can be re-factored to use `:` (cons) more than `++` (
 5. Goto step 2 unless the tail is empty
 6. The 12 digits you have left will give the highest value. **End of.**
 
-*This is a joke -- if you haven't seen Big O notation, you still haven't. Can't say anything on *The Internet* these days...
+--------------------------
+*Is there a tail-recursive way to do this?
+
+**This is a joke -- if you haven't seen Big O notation, you still haven't. Can't say anything on *The Internet* these days...
