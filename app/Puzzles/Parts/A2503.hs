@@ -34,7 +34,7 @@ import Norms
 import ArithEx
 
 
-
+problemNumber :: String
 problemNumber = "A2503"
 
 -- Entry point. Control which steps to run here
@@ -71,7 +71,7 @@ exec1 :: String -> String -> String -> IO()
 exec1 inpPathBase inpPath0 inpPath1 = do
     let 
         --inpPath2 = inpPathBase ++ "Test2.txt"
-{-@@-}inpPath = inpPath0         -- Choose Test or Input here 
+{-@@-}inpPath = inpPath1         -- Choose Test or Input here 
 
     readParseSolve "Part 1" inpPath parseLines solve1
 
@@ -81,7 +81,7 @@ exec2 :: String -> String -> String -> IO()
 exec2 inpPathBase inpPath0 inpPath1 = do
     let 
         --inpPath2 = inpPathBase ++ "Test2.txt"
- {-@@-}inpPath = inpPath0         -- Choose Test or Input here 
+ {-@@-}inpPath = inpPath1         -- Choose Test or Input here 
 
     readParseSolve "Part 2" inpPath parseLines solve2
 
@@ -102,23 +102,65 @@ execDebug inpPathBase inpPath0 inpPath1 = do
 type ParseLineResult = Int --- Best to replace ParseLineResult with the actual type, if it's simple enough.
                             -- Defining this here just to allow us to warm up the compilet on the blank file
 
-parseLines :: [String] -> ParseLineResult
-parseLines ls = 
-    0
+parseLines :: [[Char]] -> [[Int]]
+parseLines = 
+    map (map (\c -> readInt [c])) 
 
 --------------------------------------------------------------------------------------------
 -- Solver
 
-solve1 :: ParseLineResult ->  Maybe Int
+solve1 :: [[Int]] ->  Maybe Int
 solve1 plr = -- @@
-    Nothing
+    let
+        lmax0 ls =   maximum $ map (\(x,y) -> 10*x + y) $ makeAllPairs ls
 
-solve2 :: ParseLineResult -> Maybe Int
+        lmaxs = map lmax0 plr
+    in
+        Just $ sum lmaxs
+
+solve2 :: [[Int]] -> Maybe Int
 solve2 plr = -- @@
-    Nothing
+    let
+--        makeAllNs _ [] = [] 
+--        makeAllNs 1 ls = map (: []) ls
+--        makeAllNs n (x:xs) = map (x :) ys ++ ys'
+--            where
+--                ys =  makeAllNs (n-1) xs
+--                ys' =  makeAllNs n xs
+        
+        asDig = foldl (\acc x -> acc * 10 + x) 0 
 
-solveDebug :: ParseLineResult ->  IO()
+  --      lmax0 ls =   maximum $ map asDig $ makeAllNs (12 ::Int) ls
+        
+        step' acc0 [] x = acc0
+        step' acc0 [x] y = acc0 ++ [max x y]
+        step' acc0 (x:y:xs) z
+            | x < y = acc0 ++ (y:xs) ++ [z]
+            | otherwise = step' (acc0 ++ [x]) (y:xs) z
+
+        step acc x = step' [] acc x
+            
+            
+
+        lmax0 ls = foldl step xs ls' 
+            where 
+                (xs,ls') = splitAt 12 ls
+
+        lmaxs = map (asDig . lmax0) plr
+    in
+        Just $ sum lmaxs
+
+solveDebug :: [[Int]] ->  IO()
 solveDebug plr = do
+    let
+        makeAllNs _ [] = []
+        makeAllNs 1 ls = map (: []) ls
+        makeAllNs n (x:xs) = map (x :) ys ++ ys'
+            where
+                ys =  makeAllNs (n-1) xs
+                ys' =  makeAllNs n xs
+
+    print $ makeAllNs 2 [1,2,3,4]
     return ()
 --------------------------------------------------------------------------------------------
 -- Business
