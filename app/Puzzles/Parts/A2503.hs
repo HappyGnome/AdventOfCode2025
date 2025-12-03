@@ -138,11 +138,7 @@ solve2 plr = -- @@
             | x < y = acc0 ++ (y:xs) ++ [z]
             | otherwise = step' (acc0 ++ [x]) (y:xs) z
 
-        step acc x = step' [] acc x
-            
-            
-
-        lmax0 ls = foldl step xs ls' 
+        lmax0 ls = foldl (step' []) xs ls' 
             where 
                 (xs,ls') = splitAt 12 ls
 

@@ -20,11 +20,11 @@ Maybe there's a better way, but probably we need a way to detect which integers 
 
 * So, hack around until you get something that seems to detect periodic strings: 
     
-    ![Bad solution Day 1](images/Day2_bad.png)
+    ![Bad solution Day 2](images/Day2_bad.png)
 
 * Then, later (when the time pressure is gone) repent. (All hail `zipWith`):
 
-    ![Better solution Day 1](images/Day2_OK.png)
+    ![Better solution Day 2](images/Day2_OK.png)
   
   What's going on here?
     * Local `ls'` is our string to test (`ls`) with `n` elements removed from the start
