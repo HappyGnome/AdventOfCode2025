@@ -10,6 +10,7 @@ In the pages linked below are some brief discussions of the key points of the pr
 * [Day 1](docs/day1.md) - going in circles
 * [Day 2](docs/day2.md) - a repeating problem
 * [Day 3](docs/day3.md) - unwise choices
+* [Day 4](docs/day4.md) - a lower form of life
 
 
 

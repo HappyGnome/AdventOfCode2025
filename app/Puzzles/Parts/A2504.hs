@@ -113,14 +113,16 @@ solve1 :: Map.Map (V2 Int) Bool ->  Maybe Int
 solve1 plr = -- @@
     let
         allAdj = [Up,Dn,Lt,Rt,Ul,Ur,Dl,Dr]
+
         nbrs p = filter id $ mapMaybe (\dir -> plr Map.!? stepInDir8 dir p) allAdj
+
         validCell p _ = length (nbrs p) < 4
     in
       Just $ length $ Map.toList $ Map.filter id $ Map.mapWithKey validCell plr
 
 
 solve2 :: Map.Map (V2 Int) Bool -> Maybe Int
-solve2 plr = -- @@
+solve2 plr = -- @@ ef
     let
         allAdj = [Up,Dn,Lt,Rt,Ul,Ur,Dl,Dr]
         nbrs plr' p = filter id $ mapMaybe (\dir -> plr' Map.!? stepInDir8 dir p) allAdj
@@ -145,7 +147,7 @@ solveDebug plr = do
         validCell plr' p _ = length (nbrs plr' p) < 4
 
         nextMap cnt plr' 
-            | new > 0 = (print () >> rende candidate)  >> (rende $ Map.filter not candidate) >> (nextMap (cnt + new) $ Map.map not $ Map.filter not candidate )
+            | new > 0 = (print () >> rende candidate)  >> rende (Map.filter not candidate) >> nextMap (cnt + new) (Map.map not $ Map.filter not candidate )
             | otherwise = print cnt
             where
                 candidate = Map.mapWithKey (validCell plr') plr'
