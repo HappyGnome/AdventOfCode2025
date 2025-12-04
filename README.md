@@ -6,7 +6,7 @@ Language used: Haskell
 
 # Commentary on solutions
 
-In the pages linked below are some brief discussions of the key points of the problems and mistakes I made solving them. Comments will be added about problems if/when time permits, and if I think of something worth mentioning.
+In the pages linked below are some brief discussions of the key points of the problems and mistakes I made solving them. Comments will be added about problems if/when time permits, and if I think of something worth mentioning. Bet you can't spot any cringey jokes.
 * [Day 1](docs/day1.md) - going in circles
 * [Day 2](docs/day2.md) - a repeating problem
 * [Day 3](docs/day3.md) - unwise choices
