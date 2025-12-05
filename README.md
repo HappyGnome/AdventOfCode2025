@@ -11,6 +11,7 @@ In the pages linked below are some brief discussions of the key points of the pr
 * [Day 2](docs/day2.md) - a repeating problem
 * [Day 3](docs/day3.md) - unwise choices
 * [Day 4](docs/day4.md) - a lower form of life
+* [Day 5](docs/day5.md) - day 1 was 4 days ago
 
 
 

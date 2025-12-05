@@ -127,9 +127,9 @@ solve1 (rngs,ings) = -- @@
 solve2 :: ([(Int,Int)],[Int]) -> Maybe Int
 solve2 (rngs,ings) = -- @@
     let
-        isect (a,b) (c,d) = d>=a && c<=b
+        isect (a,b) (c,d) = d>=a && c<=b -- Only need to check one, if we assume they're sorted?
 
-        unionRng (a,b) (c,d) = (min a c, max b d)
+        unionRng (a,b) (c,d) = (min a c, max b d) -- Assuming sort order could allow us to remove the `min` ?
         
         srtd = sort rngs
 
@@ -138,10 +138,10 @@ solve2 (rngs,ings) = -- @@
             | isect x y =  f fin (unionRng x y) ys
             | otherwise = f (x:fin) y ys
             
-        g =  f [] (head srtd) (tail srtd)
+        g =  f [] (head srtd) $ tail srtd -- Don't forget to sort!
 
     in
-        Just $  sum $ map (\(x,y) -> 1 + y - x) g
+        Just $  sum $ map (\(x,y) -> 1 + y - x) g -- Don't forget the + 1!
 
 
 --solve2 :: ([(Int,Int)],[Int]) -> Maybe Int
