@@ -51,45 +51,46 @@ That's just a transpose! And the order of the rows (columns in the input) doesn'
 
 * Remove the ops row and transpose the remaining grid (nothing is parsed yet, it's just a grid of digits and spaces).
 
-```
-[
-    "121",
-    "250",
-    "3  ",
-    "   ",
-    "432",
-    " 37",
-    " 9 ",
-    "   ",
-    ...
-]
-```
+    ```
+    [
+        "121",
+        "250",
+        "3  ",
+        "   ",
+        "432",
+        " 37",
+        " 9 ",
+        "   ",
+        ...
+    ]
+    ```
 
 * The numbers (still as strings) to input to each op are now separated by rows that are only whitespace. Split on these "empty" rows.
 
-```
-[
-    ["121", "250", "3  "],
-    ["432", " 37", " 9 "],
-    ...
-]
-```
+    ```
+    [
+        ["121", "250", "3  "],
+        ["432", " 37", " 9 "],
+        ...
+    ]
+    ```
 
 * Convert each row for each op to an `Int` (the parse function ignores the remaining whitespace automatically).
 
-```
-[
-    [121, 250, 3],
-    [432,  37, 9],
-    ...
-]
-```
+    ```
+    [
+        [121, 250, 3],
+        [432,  37, 9],
+        ...
+    ]
+    ```
 
 * `zip` the ops with the corresponding ops and conclude as for part 1.
-```
-[
-    ([121, 250, 3], '*'),
-    ([432,  37, 9], '+'),
-    ...
-]
-```
+
+    ```
+    [
+        ([121, 250, 3], '*'),
+        ([432,  37, 9], '+'),
+        ...
+    ]
+    ```
