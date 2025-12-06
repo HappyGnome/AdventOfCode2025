@@ -49,31 +49,15 @@ exec = do
     exec2 inpPathBase inpPath0 inpPath1
     execDebug inpPathBase inpPath0 inpPath1
 
--- | Read input, parse, call solver and print output, plus basic timing
-readParseSolve :: (PuzzleSolution b) => String -> String -> ([String] -> a) -> (a -> Maybe b) -> IO()
-readParseSolve name inpPath parse solve = do
-
-    (ls, readTime) <- IOH.runTimedIO IOH.getFileLines inpPath
-
-    let
-        psd =parse ls
-
-        soln = solve psd
-
-    (_,parseSolveTime) <- IOH.runTimedIO (printSoln ( problemNumber ++ "/" ++ name) inpPath) soln 
-
-    putStrLn $ "Read time: " ++ show readTime ++ "  Parse & Solve: " ++ show parseSolveTime
-
-
 --------------------------
 -- Entry point for Part 1
 exec1 :: String -> String -> String -> IO()
 exec1 inpPathBase inpPath0 inpPath1 = do
     let 
         --inpPath2 = inpPathBase ++ "Test2.txt"
-{-@@-}inpPath = inpPath0         -- Choose Test or Input here 
+{-@@-}inpPath = inpPath1         -- Choose Test or Input here 
 
-    readParseSolve "Part 1" inpPath parseLines solve1
+    readParseSolve (problemNumber ++ " / Part 1") inpPath parseLines solve1
 
 --------------------------
 -- Entry point for Part 2
@@ -81,9 +65,9 @@ exec2 :: String -> String -> String -> IO()
 exec2 inpPathBase inpPath0 inpPath1 = do
     let 
         --inpPath2 = inpPathBase ++ "Test2.txt"
- {-@@-}inpPath = inpPath0         -- Choose Test or Input here 
+ {-@@-}inpPath = inpPath1         -- Choose Test or Input here 
 
-    readParseSolve "Part 2" inpPath parseLines solve2
+    readParseSolve (problemNumber ++ " / Part 2") inpPath parseLines solve2
 
 --------------------------
 -- Entry point for optional debug ops

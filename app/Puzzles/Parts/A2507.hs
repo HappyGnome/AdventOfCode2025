@@ -12,7 +12,7 @@ of style and logic. This is a learning project for the author, and has been prep
 {-# OPTIONS_GHC -Wno-unused-matches #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
-module A2506 where
+module A2507 where
 
 import Text.Read
 import Data.Maybe
@@ -35,7 +35,7 @@ import ArithEx
 
 
 problemNumber :: String
-problemNumber = "A2506"
+problemNumber = "A2507"
 
 -- Entry point. Control which steps to run here
 exec :: IO()
@@ -86,51 +86,22 @@ execDebug inpPathBase inpPath0 inpPath1 = do
 type ParseLineResult = Int --- Best to replace ParseLineResult with the actual type, if it's simple enough.
                             -- Defining this here just to allow us to warm up the compilet on the blank file
 
-parseLines :: [String] -> [String]
-parseLines = id
-
-parseLines2 :: [String] -> [([Int],Char)]
-parseLines2 ls = 
-    let
-        opsRaw = filter (\cs -> cs/= " " && cs/= "") $ IOH.splitOnPred(==' ') $ last ls
-        numsRaw = map (map readInt) $ splitOnPred(all (== ' ')) $ transpose $ init ls
-        
-    in 
-        zip numsRaw $ map head opsRaw
+parseLines :: [String] -> ParseLineResult
+parseLines ls = 
+    0
 
 --------------------------------------------------------------------------------------------
 -- Solver
 
-solve1 :: [String] ->  Maybe Int
-solve1 plr = -- @@   6757749566978
-    let
-        toks =  map (filter (any (/=' ')) . splitOnPred(==' ')) plr
-        tokst = map reverse $ transpose toks
+solve1 :: ParseLineResult ->  Maybe Int
+solve1 plr = -- @@
+    Nothing
 
-        doOp [] = error "op and nums expected. Found neither."
-        doOp [_] = error "op and nums expected. Found op only."
-        doOp (c:xs)
-            | c =="*" = product ys
-            | otherwise = sum ys
-            where
-                ys = map readInt xs
-    in
-        Just $ sum $ map doOp tokst
+solve2 :: ParseLineResult -> Maybe Int
+solve2 plr = -- @@
+    Nothing
 
-
-solve2 :: [String] -> Maybe Int
-solve2 plr' = -- @@
-    let
-        plr = parseLines2 plr'
-        doOp xs c
-            | c =='*' = product xs
-            | otherwise = sum xs
-
-    in
-        Just $ sum $ map (uncurry doOp) plr
-
-
-solveDebug :: [String] ->  IO()
+solveDebug :: ParseLineResult ->  IO()
 solveDebug plr = do
     return ()
 --------------------------------------------------------------------------------------------

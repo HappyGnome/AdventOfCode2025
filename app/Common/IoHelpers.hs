@@ -20,8 +20,9 @@ module IoHelpers (
         , renderGrid
         , renderMat
         , loadJust2D 
-        --, runTimed
-        , runTimedIO) where
+        , runTimed
+        , runTimedIO
+        , readParseSolve) where
 
 import System.Windows.Clipboard
 import qualified Data.Map as Map
@@ -31,10 +32,12 @@ import Text.Printf
 import Data.Maybe as Maybe
 import Data.List.Index
 import Data.Tuple.Extra (secondM)
-import Data.Time.Clock.System
+import Data.Time.Clock.System()
 import Data.Time.Clock
-import Data.Int
+import Data.Int()
 import GHC.Conc
+import Control.DeepSeq
+-- import Control.Concurrent()
 
 ------------------------------------------------------------------------------
 -- Puzzle solution printing
@@ -117,13 +120,13 @@ renderMat f lss =
 
 ---------------------------------------
 -- Timing
--- runTimed :: (a -> b) -> a -> IO (b,NominalDiffTime)
--- runTimed f x = do
---     st <- getCurrentTime
---     let
---         y = f x
---     nd <- y `pseq` getCurrentTime
---     return (y, diffUTCTime nd st)
+runTimed :: (NFData b) => (a -> b) -> a -> IO (b,NominalDiffTime)
+runTimed f x = do
+     st <- getCurrentTime
+     let
+         y = f x
+     nd <- rnf y `pseq` getCurrentTime
+     return (y, diffUTCTime nd st)
         
 runTimedIO :: (a -> IO b) -> a -> IO (b,NominalDiffTime)
 runTimedIO f x = do
@@ -150,3 +153,23 @@ renderGridInner nrow ncol f m =
         cs = reverse $ renderRowInner nrow ncol f m
     in
         cs : renderGridInner (nrow-1) ncol f m
+
+--------------------------------------------------------------------------------------------------------------
+--Running solvers
+--
+-- | Read input, parse, call solver and print output, plus basic timing
+readParseSolve :: (PuzzleSolution b, NFData a, NFData b) => String -> String -> ([String] -> a) -> (a -> Maybe b) -> IO()
+readParseSolve name inpPath parse solve = do
+
+    (ls, readTime) <- runTimedIO getFileLines inpPath
+
+    (psd, parseTime) <- runTimed parse ls
+
+    (soln, solveTime ) <- runTimed solve psd
+
+    (_,fullSolveTime) <- runTimedIO (printSoln name inpPath) soln 
+
+    putStrLn $ "Read time: " ++ show readTime 
+            ++ "  Parse time: " ++ show parseTime
+            ++ "  Solve time: " ++ show solveTime
+            ++ "  Output time: " ++ show fullSolveTime
