@@ -105,15 +105,6 @@ type ParseLineResult = Int --- Best to replace ParseLineResult with the actual t
 parseLines :: [String] -> [String]
 parseLines = id
 
-parseLines1 :: [String] -> [([Int],Char)]
-parseLines1 ls = 
-    let
-        opsRaw = filter (\cs -> cs/= " " && cs/= "") $ IOH.splitOnPred(==' ') $ last ls
-        numsRaw = map (map readInt . filter (\cs -> cs/= " " && cs/= "") . IOH.splitOnPred(== ' ')) $ init ls
-        nums = transpose numsRaw
-    in 
-        zip nums $ map head opsRaw
-
 parseLines2 :: [String] -> [([Int],Char)]
 parseLines2 ls = 
     let
@@ -127,15 +118,21 @@ parseLines2 ls =
 -- Solver
 
 solve1 :: [String] ->  Maybe Int
-solve1 plr' = -- @@
+solve1 plr = -- @@   6757749566978
     let
-        plr = parseLines1 plr'
-        doOp xs c
-            | c =='*' = product xs
-            | otherwise = sum xs
+        toks =  map (filter (any (/=' ')) . splitOnPred(==' ')) plr
+        tokst = map reverse $ transpose toks
 
+        doOp [] = error "op and nums expected. Found neither."
+        doOp [_] = error "op and nums expected. Found op only."
+        doOp (c:xs)
+            | c =="*" = product ys
+            | otherwise = sum ys
+            where
+                ys = map readInt xs
     in
-        Just $ sum $ map (uncurry doOp) plr
+        Just $ sum $ map doOp tokst
+
 
 solve2 :: [String] -> Maybe Int
 solve2 plr' = -- @@
