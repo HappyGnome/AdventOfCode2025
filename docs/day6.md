@@ -22,7 +22,7 @@ I thought we said in [yesterday's commentary](day5.md) that it's not day 1 anymo
 * Zip* with the row of ops and either take the product or sum of each row of ints depending on the op symbol that `zip` has paired it with.
 * Sum the result.
 
-*We even can do things in a different order, avoiding the need to remove the ops row and zip back:
+*We even can things differently order so the `Int` parsing goes after the transpose, avoiding the need to remove the ops row and zip back:
 
 ![Day 6 pt 1 simplified](images/Day6_pt1_simplified.png)
 
@@ -35,10 +35,11 @@ I thought we said in [yesterday's commentary](day5.md) that it's not day 1 anymo
 10      121
 +           = 374
 ```
---> **Take the columns right-to-left!** <--
+Crucially, we are to **take the columns right-to-left!**
 
 
 **Solution:**
+
 Take the columns left-to-right:
 
 ```
@@ -48,8 +49,47 @@ Take the columns left-to-right:
 ```
 That's just a transpose! And the order of the rows (columns in the input) doesn't matter, of course.
 
-* Removing the ops row and transposing the remaining grid (nothing is parsed yet, it's just a grid of digits and spaces).
-* The rows of the transposed table that correspond to each op are separated by rows that are only whitespace. Split on these "empty" rows.
-* Convert each row for each op to an `Int` (the parse function ignores the remaining whitespace automatically).
-* `zip` the ops with the corresponding ops and conclude as for part 1.
+* Remove the ops row and transpose the remaining grid (nothing is parsed yet, it's just a grid of digits and spaces).
 
+```
+[
+    "121",
+    "250",
+    "3  ",
+    "   ",
+    "432",
+    " 37",
+    " 9 ",
+    "   ",
+    ...
+]
+```
+
+* The numbers (still as strings) to input to each op are now separated by rows that are only whitespace. Split on these "empty" rows.
+
+```
+[
+    ["121", "250", "3  "],
+    ["432", " 37", " 9 "],
+    ...
+]
+```
+
+* Convert each row for each op to an `Int` (the parse function ignores the remaining whitespace automatically).
+
+```
+[
+    [121, 250, 3],
+    [432,  37, 9],
+    ...
+]
+```
+
+* `zip` the ops with the corresponding ops and conclude as for part 1.
+```
+[
+    ([121, 250, 3], '*'),
+    ([432,  37, 9], '+'),
+    ...
+]
+```
