@@ -116,7 +116,7 @@ solve1 (plr, rows) = -- @@ 1562
 
                 wk'' = noHitSplt `union` aftrSplit
 
-        g = foldl (\acc _ -> uncurry f acc) ([startAt],0) [0..rows] 
+        g = (!! rows) $ iterate (uncurry f) ([startAt],0) 
 
     in
         Just $ snd g
@@ -140,7 +140,7 @@ solve2 (plr,rows) = -- @@
 
                 wk'' = map (second (sumOn' snd)) $ groupOnKey fst $ sortOn fst $ noHitSplt ++ aftrSplitL ++ aftrSplitR
 
-        g = foldl (\acc _ -> f acc) ([(startAt,1)]) [0 .. rows] 
+        g = (!! rows) $ iterate f [(startAt,1)] 
     in 
         Just $ sumOn' snd g
 
