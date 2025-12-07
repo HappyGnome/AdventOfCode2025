@@ -306,21 +306,23 @@ solve2SL :: (Map.Map (V2 Int) Char, Int) -> Maybe Integer
 solve2SL (plr,rows) = -- @@
     let 
         mp' = Map.filter (=='^') plr
+
         startAt = fst $ head $ Map.toList $ Map.filter(=='S') plr
- 
 
         f wk = wk''
             where 
                 wk' = map (first (stepInDir8 Dn)) wk 
 
                 hitSplt = filter (\p -> isJust $ mp' Map.!? fst p) wk'
+
                 noHitSplt = filter (\p -> isNothing $ mp' Map.!? fst p) wk'
 
                 aftrSplitL = map (first (stepInDir8 Lt)) hitSplt 
 
                 aftrSplitR = map (first (stepInDir8 Rt)) hitSplt
 
-                unionOp = unionOfSortedBy fst (\(x,y) (_,z) -> (x, y+z))
+                unionOp = unionOfSortedBy fst (\(x,y) (_,z) -> (x, y + z))
+
                 wk'' = unionOp (unionOp  aftrSplitR noHitSplt) aftrSplitL
 
         g = (!! rows) $ iterate f [(startAt,1)] 
@@ -353,6 +355,25 @@ solve2PR (plr,rows) = -- @@
     in 
         Just $ fst $ f 1 startAt Map.empty
 
+-- | Naive recursion - looks good, but scales very badly 
+solve2PR' :: (Map.Map (V2 Int) Char, Int) -> Maybe Integer
+solve2PR' (plr,rows) = -- @@
+    let 
+        mp' = Map.filter (=='^') plr
+        startAt = fst $ head $ Map.toList $ Map.filter(=='S') plr
+
+        f n x
+            | n > rows = 1
+            | isJust $ mp' Map.!? y0 = f m y1 + f m y2
+            | otherwise = f m y0 
+            where 
+                y0 = stepInDir8 Dn x
+                y1 = stepInDir8 Dl x
+                y2 = stepInDir8 Dr x
+                m = n + 1
+
+    in 
+        Just $ f 1 startAt
 ---------------------------------------------------------------------------
 
 solveDebug :: (Map.Map (V2 Int) Char, Int) ->  IO()
