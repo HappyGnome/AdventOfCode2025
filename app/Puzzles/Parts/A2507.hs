@@ -57,7 +57,7 @@ exec1 inpPathBase inpPath0 inpPath1 = do
         --inpPath2 = inpPathBase ++ "Test2.txt"
 {-@@-}inpPath = inpPath1         -- Choose Test or Input here 
 
-    readParseSolve' (problemNumber ++ " / Part 1") inpPath parseLines solve1
+    readParseSolve (problemNumber ++ " / Part 1") inpPath parseLines solve1
 
 --------------------------
 -- Entry point for Part 2
@@ -67,7 +67,8 @@ exec2 inpPathBase inpPath0 inpPath1 = do
         --inpPath2 = inpPathBase ++ "Test2.txt"
  {-@@-}inpPath = inpPath1         -- Choose Test or Input here 
 
-    readParseSolve' (problemNumber ++ " / Part 2") inpPath parseLines solve2
+    readParseSolve (problemNumber ++ " / Part 2") inpPath parseLines solve2
+    -- 24292631346665
 
 --------------------------
 -- Entry point for optional debug ops
@@ -99,37 +100,27 @@ parseLines ls =
 -- Solver
 
 solve1 :: (Map.Map (V2 Int) Char, Int) ->  Maybe Int --
-solve1 (plr, rows) = -- @@
+solve1 (plr, rows) = -- @@ 1562
     let 
-     -- TODO Map keys function?
         mp' = Map.filter (=='^') plr
         startAt = fst $ head $ Map.toList $ Map.filter(=='S') plr
 
         f wk n = ( wk'' , n + length hitSplt)
             where 
-                wk' = Map.fromList $ map (\(k,v) -> (stepInDir8 Dn k,v)) $ Map.toList wk 
-                hitSplt = Map.filterWithKey (\k _ -> isJust $ mp' Map.!? k) wk'
-                noHitSplt = Map.filterWithKey (\k _ -> isNothing $ mp' Map.!? k) wk'
+                
+                wk' = map (stepInDir8 Dn) wk 
+                hitSplt = filter (\v -> isJust $ mp' Map.!? v) wk'
+                noHitSplt = filter (\v -> isNothing $ mp' Map.!? v) wk'
 
-                aftrSplit = Map.fromList $ 
-                        union (map (\(k,v) -> (stepInDir8 Lt k,v)) $ Map.toList hitSplt) 
-                                (map (\(k,v) -> (stepInDir8 Rt k,v)) $ Map.toList hitSplt)
+                aftrSplit = union (map (stepInDir8 Lt) hitSplt) (map (stepInDir8 Rt) hitSplt)
 
-                wk'' = noHitSplt `Map.union` aftrSplit
+                wk'' = noHitSplt `union` aftrSplit
 
-        g = foldl (\acc _ -> (uncurry f) acc) (Map.fromList [(startAt,True)],0) [0..rows] 
+        g = foldl (\acc _ -> uncurry f acc) ([startAt],0) [0..rows] 
 
     in
         Just $ snd g
-
---        mp' = Map.filter (=='^') plr
---        allSplitrs = length mp'
---
---        hasNbr v _ = (==) (Just '^') $ mp' Map.!? (stepInDir8 Rt $ stepInDir8 Rt v)
---        ign = length $ Map.filterWithKey hasNbr mp'
---    in 
---        Just $ traceShow (allSplitrs, ign) $ (allSplitrs) - 1
-
+ 
 solve2 :: (Map.Map (V2 Int) Char, Int) -> Maybe Integer
 solve2 (plr,rows) = -- @@
     let 
@@ -138,22 +129,20 @@ solve2 (plr,rows) = -- @@
 
         f wk = wk''
             where 
-                wk' = Map.fromList $ map (\(k,v) -> (stepInDir8 Dn k,v)) $ Map.toList wk 
+                wk' = map (first (stepInDir8 Dn)) wk 
 
-                hitSplt = Map.filterWithKey (\k _ -> isJust $ mp' Map.!? k) wk'
-                noHitSplt = Map.filterWithKey (\k _ -> isNothing $ mp' Map.!? k) wk'
+                hitSplt = filter (\p -> isJust $ mp' Map.!? fst p) wk'
+                noHitSplt = filter (\p -> isNothing $ mp' Map.!? fst p) wk'
 
-                aftrSplitL = Map.fromList $ 
-                                (map (\(k,v) -> (stepInDir8 Lt k, v)) $ Map.toList hitSplt) 
+                aftrSplitL = map (first (stepInDir8 Lt)) hitSplt 
 
-                aftrSplitR = Map.fromList $ 
-                                (map (\(k,v) -> (stepInDir8 Rt k,v)) $ Map.toList hitSplt)
+                aftrSplitR = map (first (stepInDir8 Rt)) hitSplt
 
-                wk'' = Map.unionWith (+) (Map.unionWith (+) noHitSplt aftrSplitL) aftrSplitR
+                wk'' = map (second (sumOn' snd)) $ groupOnKey fst $ sortOn fst $ noHitSplt ++ aftrSplitL ++ aftrSplitR
 
-        g = foldl (\acc _ -> f acc) (Map.fromList [(startAt,1)]) [0 .. rows] 
+        g = foldl (\acc _ -> f acc) ([(startAt,1)]) [0 .. rows] 
     in 
-        Just $ traceShow (length mp') $ sum g
+        Just $ sumOn' snd g
 
 solveDebug :: (Map.Map (V2 Int) Char, Int) ->  IO()
 solveDebug plr = do

@@ -13,6 +13,7 @@ of style and logic. This is a learning project for the author.
 -- {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module MiniLinLib (
          fromTuple2
@@ -36,6 +37,7 @@ import Data.Function
 import ArithEx -- Type claesses for basic arithmetic properties
 
 import Control.DeepSeq
+import GHC.Generics
 
 ----------------------------
 -- General linear
@@ -63,7 +65,7 @@ data M2x2 a = M2x2 a a a a
     deriving (Show, Eq)
 
 data V2 a = V2 {v2x :: a, v2y :: a}
-    deriving (Show, Eq)
+    deriving (Show, Eq, Generic)
 
 -- Instances
 instance (Num a, Ord a) => Ord (V2 a) where
@@ -92,6 +94,8 @@ instance (Num a) => Subbable (V2 a) where
 
 instance (Num a) => Zero (V2 a) where
     zero = V2 0 0
+
+instance (NFData a) => NFData (V2 a)
 --
 -- 2D methods
 

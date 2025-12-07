@@ -175,7 +175,8 @@ readParseSolve name inpPath parse solve = do
             ++ "  Solve time: " ++ show solveTime
             ++ "  Output time: " ++ show fullSolveTime
 
--- | Read input, parse, call solver and print output, plus basic timing
+-- | Read input, parse, call solver and print output. 
+-- No timing is provided, but types involved don't need to be NFData instances
 readParseSolve' :: (PuzzleSolution b) => String -> String -> ([String] -> a) -> (a -> Maybe b) -> IO()
 readParseSolve' name inpPath parse solve = do
 
