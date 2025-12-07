@@ -23,7 +23,10 @@ module IoHelpers (
         , runTimed
         , runTimedIO
         , readParseSolve
-        , readParseSolve') where
+        , readParseSolve'
+        , readParseSolveReps
+        , reptest
+        , reptestMin) where
 
 import System.Windows.Clipboard
 import qualified Data.Map as Map
@@ -38,7 +41,10 @@ import Data.Time.Clock
 import Data.Int()
 import GHC.Conc
 import Control.DeepSeq
+-- import System.CPUTime
+import System.Win32.Time
 -- import Control.Concurrent()
+--import Debug.Trace
 
 ------------------------------------------------------------------------------
 -- Puzzle solution printing
@@ -128,13 +134,22 @@ runTimed f x = do
          y = f x
      nd <- rnf y `pseq` getCurrentTime
      return (y, diffUTCTime nd st)
+
+runTimed' :: (NFData b, PerfCounter pc) => pc -> (a -> b) -> a -> IO (b,DiffTime)
+runTimed' pc f x = do
+     st <- tickCount pc
+     let
+         y = f x
+     nd <- rnf y `deepseq` tickCount pc
+     return (y, ticksToDiffTime pc st nd)
+
         
 runTimedIO :: (a -> IO b) -> a -> IO (b,NominalDiffTime)
 runTimedIO f x = do
     st <- getCurrentTime
     y <- f x
     nd <- getCurrentTime
-    return (y, diffUTCTime nd st )
+    return (y, diffUTCTime nd st)
         
 ---------------------------------------
 -- Private
@@ -170,7 +185,7 @@ readParseSolve name inpPath parse solve = do
 
     (_,fullSolveTime) <- runTimedIO (printSoln name inpPath) soln 
 
-    putStrLn $ "Read time: " ++ show readTime 
+    putStrLn $ "Read time: " ++ show readTime
             ++ "  Parse time: " ++ show parseTime
             ++ "  Solve time: " ++ show solveTime
             ++ "  Output time: " ++ show fullSolveTime
@@ -191,3 +206,75 @@ readParseSolve' name inpPath parse solve = do
 
     putStrLn $ "Read time: " ++ show readTime 
             ++ "  Output time: " ++ show fullSolveTime
+
+-- | Read input, parse, call solver and print output, plus basic timing
+readParseSolveReps :: (PuzzleSolution b, NFData a, NFData b) => String -> String -> ([String] -> a) -> Int -> (a -> Maybe b) -> IO()
+readParseSolveReps name inpPath parse nSolve solve = do
+
+    (ls, readTime) <- runTimedIO getFileLines inpPath
+
+    (psd, parseTime) <- runTimed parse ls
+
+    pc <- calibrateQPC 100
+
+    (soln, solveTime ) <- reptestMin nSolve pc solve psd
+
+    (_,fullSolveTime) <- runTimedIO (printSoln name inpPath) soln 
+
+    putStrLn $ "Read time: " ++ show readTime
+            ++ "  Parse time: " ++ show parseTime
+            ++ "  Min Solve time (n=" ++ show nSolve ++ "): " ++ show solveTime
+            ++ "  Output time: " ++ show fullSolveTime
+
+
+-- | Run a function multiple times on the same input, ignoring all but the last output
+reptest :: (NFData b) => Int -> (a->b) -> a -> b
+reptest n f x
+    | n <= 0 = f x
+    | otherwise = f x `deepseq` reptest (n-1) f x 
+
+-- | Run a function multiple times on the same input, ignoring all but the last output. Find the minimum time.
+reptestMin :: (NFData b, PerfCounter pc) => Int -> pc -> (a->b) -> a -> IO (b,DiffTime)
+reptestMin n pc f x
+     | n <= 0 = runTimed' pc f x
+     | otherwise = do 
+            (b, dt0) <- runTimed' pc f x
+            (_, dt1) <- reptestMin (n-1) pc f x
+            return (b, min dt0 dt1)
+
+----------------------------------------------
+---- TODO : this needs some cleanup. Maybe a separate mini-library?
+
+class PerfCounter a where
+    freq :: a -> Integer
+    tickCount :: a -> IO Integer
+
+-- | Perf Counter based on SystemTime from ProcessTimes
+newtype QPC = QPC {freq_ :: Integer}
+
+instance PerfCounter QPC where
+    freq = freq_
+    tickCount _ = queryPerformanceCounter    
+
+
+calibrateQPC :: Int -> IO QPC
+calibrateQPC _ = do
+--    let
+--        qpc = QPC 0
+--    st <- tickCount qpc
+ --   threadDelay (ms * 1000)
+--    nd <- tickCount qpc
+    
+    pubFreq <-  queryPerformanceFrequency
+--    let
+--        fq = 1000 * (nd - st) `div` toInteger ms
+
+--    putStrLn $  "QPC estimated freq: " ++ show fq ++ " | Stated freq: " ++ show pubFreq
+    return $ QPC pubFreq  -- stated frequency seems to be accurate
+
+ticksToDiffTime :: (PerfCounter a) => a -> Integer -> Integer -> DiffTime
+ticksToDiffTime pc st nd =
+    picosecondsToDiffTime $ (nd - st) * (10^12 :: Integer) `div` freq pc
+    
+
+        

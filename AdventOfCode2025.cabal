@@ -88,6 +88,7 @@ executable AdventOfCode2025
                     , time ^>= 1.11
                     , random ^>= 1.2.1.2
                     , deepseq ^>=1.4.8.1
+                    , Win32
 
     -- Directories containing source files.
     hs-source-dirs:   app
