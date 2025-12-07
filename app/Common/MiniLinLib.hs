@@ -35,6 +35,7 @@ module MiniLinLib (
 import Data.Function
 import ArithEx -- Type claesses for basic arithmetic properties
 
+import Control.DeepSeq
 
 ----------------------------
 -- General linear

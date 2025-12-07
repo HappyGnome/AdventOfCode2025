@@ -22,7 +22,8 @@ module IoHelpers (
         , loadJust2D 
         , runTimed
         , runTimedIO
-        , readParseSolve) where
+        , readParseSolve
+        , readParseSolve') where
 
 import System.Windows.Clipboard
 import qualified Data.Map as Map
@@ -172,4 +173,20 @@ readParseSolve name inpPath parse solve = do
     putStrLn $ "Read time: " ++ show readTime 
             ++ "  Parse time: " ++ show parseTime
             ++ "  Solve time: " ++ show solveTime
+            ++ "  Output time: " ++ show fullSolveTime
+
+-- | Read input, parse, call solver and print output, plus basic timing
+readParseSolve' :: (PuzzleSolution b) => String -> String -> ([String] -> a) -> (a -> Maybe b) -> IO()
+readParseSolve' name inpPath parse solve = do
+
+    (ls, readTime) <- runTimedIO getFileLines inpPath
+
+    let
+        psd =parse ls
+
+        soln = solve psd
+
+    (_,fullSolveTime) <- runTimedIO (printSoln name inpPath) soln 
+
+    putStrLn $ "Read time: " ++ show readTime 
             ++ "  Output time: " ++ show fullSolveTime
