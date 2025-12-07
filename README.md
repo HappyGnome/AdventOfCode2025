@@ -13,8 +13,7 @@ In the pages linked below are some brief discussions of the key points of the pr
 * [Day 4](docs/day4.md) - a lower form of life
 * [Day 5](docs/day5.md) - day 1 was 4 days ago
 * [Day 6](docs/day6.md) - reading between the lines
-
-
+* [Day 7](docs/day7.md) - sided and blind tracked
 
 # Project structure
 * `NextPuzzle.bat/NextPuzzle.ps1` Used to update the `cabal` and `Main.hs` files each day (run the `.bat`)
