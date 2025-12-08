@@ -65,6 +65,8 @@ module Shorts (
     ,newRNGFromSeed 
     ,newRNG 
     ,permuteRand
+    ,consAt
+    ,toMapCons
 ) where
 
 --import Data.Function
@@ -74,6 +76,8 @@ import Data.List (sortOn)
 import Data.Time.Clock.System
 import System.Random
 import Debug.Trace
+import Data.Maybe
+import qualified Data.Map as Map
 
 ----------------------------------------------------- 
 -- Grid helpers
@@ -422,4 +426,18 @@ permuteRand gen ls =
         (gen',ord) = foldl genOne (gen,[]) ls
     in 
        trace (show ord) $ ( gen', map snd $ sortOn fst $ zip ord ls)
+
+-------------------------------------------------------
+
+-- | Given a Map with lists as values, cons a new value to the list at the given key
+consAt :: (Ord a) => a -> b -> Map.Map a [b] -> Map.Map a [b]
+consAt k v = 
+    Map.alter (\ls -> Just $ v : fromMaybe [] ls) k
+
+-- | Create a map from a list of key-value pairs, but there may be duplicate keys
+toMapCons :: (Ord a) => [(a,b)] -> Map.Map a [b] 
+toMapCons = 
+    foldl (\mp (x,y) -> consAt x y mp) Map.empty
+
+
 

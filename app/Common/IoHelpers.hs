@@ -274,7 +274,7 @@ calibrateQPC _ = do
 
 ticksToDiffTime :: (PerfCounter a) => a -> Integer -> Integer -> DiffTime
 ticksToDiffTime pc st nd =
-    picosecondsToDiffTime $ (nd - st) * (10^12 :: Integer) `div` freq pc
+    picosecondsToDiffTime $ (nd - st) * ((10 ::Integer)^(12 :: Integer)) `div` freq pc
     
 
         

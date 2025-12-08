@@ -157,36 +157,57 @@ lcmEuclidAll = foldl lcmEuclid 1
 -- Kruskal's algorithm
 kruskal :: (Ord a, Ord b) => (a -> [(a, b)]) -> [a] -> ([(a, a, b)], [a])
 kruskal gen seed =
-  let edgeInit = sortOn thd3 $ concatMap (\a -> map (\(x, y) -> (a, x, y)) $ gen a) seed
+  let
+      edgeInit = sortOn thd3 $ concatMap (\a -> map (\(x, y) -> (a, x, y)) $ gen a) seed
 
-      root anc a =
-        case anc Map.!? a of
-          Just x -> root anc x
-          _ -> a
+      root anc a = maybe a (root anc) $ anc Map.!? a
 
       updateAnc anc a rt =
-        let anc' = Map.insert a rt anc
-         in case anc Map.!? a of
-              Just x -> updateAnc anc' x rt
-              _ -> anc'
+         let 
+            anc' = Map.insert a rt anc
+         in
+            maybe anc' (\x -> updateAnc anc' x rt) $ anc Map.!? a
 
       -- step :: [(a,a,b)] -> Map.Map a a -> (a,a,b) -> ([(a,a,b)],Map.Map a a)
       tryEdge keeps anc totry =
-        let (fm, to, _) = totry
+        let 
+            (fm, to, _) = totry
             rfm = root anc fm
             rto = root anc to
 
             anc' = updateAnc anc to rfm -- "fm" always in "seed", and initial set of roots is "seed", so (inductively) "rfm" (in fact all roots)  always in "seed"
-         in if rfm == rto
-              then
+         in 
+            if rfm == rto
+            then
                 (keeps, anc)
-              else
+            else
                 (totry : keeps, anc')
 
       (resedg, resanc) = foldl (uncurry tryEdge) ([], Map.empty) edgeInit
 
       resrts = filter (isNothing . (Map.!?) resanc) seed -- All nodes without an ancestor are the heads of trees
-   in (resedg, resrts)
+   in 
+      (resedg, resrts)
+
+
+-- | Given a set of weighted edges (not-necessarily direcet away from their root)
+--  and roots of trees, build a map of child nodes
+--  Useful for putting some structure back into the output of the minimal kruskal implementation above
+-- WIP TODO
+--normalizeTree :: (Ord a) => [(a, a, b)] -> [a] -> Map.Map a [(a,b)]
+--normalizeTree edgs rts =
+--    let
+--        fwdMp = toMapCons $ map (\(x,y,z) -> (x,(y,z))) edgs
+--        bkMp = toMapCons $ map (\(x,y,z) -> (y,(x,z))) edgs
+--
+--        addX (mp,mem) x = (mp', mem')
+--            where
+--                nbrs m = filter (\(y,_) -> not $ Set.member y mem) $ fromMaybe [] $ m Map.!? x
+--                ys = (nbrs fwdMp) union (nbrs bkMp)
+--                mp' = Map.insert x ys mp
+--                mem' = Set.insert x mem
+--    in
+        
 
 -----------------------------------------------------------------------------------------------
 -- BFS

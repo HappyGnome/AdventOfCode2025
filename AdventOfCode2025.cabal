@@ -64,7 +64,7 @@ executable AdventOfCode2025
                     ,MiniLinLib
                     ,GridStep
                     ,PuzzleAlgorithm
-                    --,Test_PuzzleAlgorithm
+                    ,Test_PuzzleAlgorithm
                     ,Norms
                     ,ArithEx
                     ,A2508

@@ -97,6 +97,14 @@ instance (Num a) => Zero (V2 a) where
     zero = V2 0 0
 
 instance (NFData a) => NFData (V2 a)
+
+instance (Normed2 a, Num a) => Normed2 (V2 a) where
+    norm2sq (V2 x y) = norm2sq x + norm2sq y 
+
+instance (Subbable a, Real c, Normed1 a c, Num a) => Normed1 (V2 a) c where
+    norm1 (V2 x y) = norm1 x + norm1 y 
+
+    normInf (V2 x y) = max (normInf x) (normInf y)
 --
 -- 2D methods
 
@@ -122,7 +130,7 @@ class AsTuple3 c where
 
 -- Data
 data V3 a = V3 {v3x :: a, v3y :: a, v3z :: a}
-    deriving (Show, Eq)
+    deriving (Show, Eq, Generic)
 
 -- Instances
 instance (Num a, Ord a) => Ord (V3 a) where
@@ -152,9 +160,15 @@ instance (Num a) => Subbable (V3 a) where
 instance (Num a) => Zero (V3 a) where
     zero = V3 0 0 0
 
+instance (NFData a) => NFData (V3 a)
+
 instance (Normed2 a, Num a) => Normed2 (V3 a) where
     norm2sq (V3 x y z) = norm2sq x + norm2sq y + norm2sq z
 
+instance (Subbable a, Real c, Normed1 a c, Num a) => Normed1 (V3 a) c where
+    norm1 (V3 x y z) = norm1 x + norm1 y + norm1 z
+
+    normInf (V3 x y z) = maximum [normInf x, normInf y, normInf z]
 --
 -- 3D methods
 
