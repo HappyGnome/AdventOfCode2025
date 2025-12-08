@@ -24,6 +24,7 @@ import Text.Regex.TDFA
 import Data.List
 import Data.List.Extra
 import Data.Ord
+import qualified Data.Set as Set
 
 import IoHelpers as IOH
 import MiniLinLib
@@ -86,22 +87,100 @@ execDebug inpPathBase inpPath0 inpPath1 = do
 type ParseLineResult = Int --- Best to replace ParseLineResult with the actual type, if it's simple enough.
                             -- Defining this here just to allow us to warm up the compilet on the blank file
 
-parseLines :: [String] -> ParseLineResult
+parseLines :: [String] -> [V3 Int]
 parseLines ls = 
-    0
+   let
+        f cs = V3 (css !! 0) (css !! 1) (css !! 2)
+            where
+                css = map readInt $ splitOnPred (==',') cs
+
+    in 
+        map f ls
+        
 
 --------------------------------------------------------------------------------------------
 -- Solver
 
-solve1 :: ParseLineResult ->  Maybe Int
+solve1 :: [V3 Int] ->  Maybe Int
 solve1 plr = -- @@
-    Nothing
+    let
 
-solve2 :: ParseLineResult -> Maybe Int
+        allPairsDist = map (\(v,w) -> (v, w , dist2 v w) ) $ makeAllPairs plr
+
+        appendMap k v = Map.alter (\ls -> Just $ v : fromMaybe [] ls) k
+
+        f mp (v,w,d) = appendMap v (w,d) mp
+
+        pairsDist0 = foldl f Map.empty $ take 1000
+                            $ sortOn thd3 allPairsDist
+
+        pairsDist v = fromMaybe [] (pairsDist0 Map.!? v)
+        
+        (edgs, rts) = kruskal pairsDist plr
+        
+        --em = Map.fromList $ map (\(x,y,z) -> (x,y)) edgs
+        --
+
+        g mp mem v w = (appendMap w v $ appendMap v w mp, Set.insert w mem)
+        -- | Set.member v mem = (appendMap v w mp, Set.insert w mem)
+          --  | otherwise = (appendMap w v mp, Set.insert v mem)
+
+        krEdMp = fst $ foldl (\(mp, mem) (v,w,_) ->  g mp mem v w) (Map.empty, Set.fromList rts) edgs
+
+
+        circSize mem x =  1 + sum ( map (circSize mem') ls)
+            where
+                ls = filter (\y -> not $ Set.member y mem) $ fromMaybe [] $ krEdMp Map.!? x
+                mem' = Set.insert x mem
+
+        circSizes = take 3 $ sortOn Down $ map (circSize Set.empty ) rts
+
+--  kruskal :: (Ord a, Ord b) => (a -> [(a, b)]) -> [a] -> ([(a, a, b)], [a])
+    in
+        Just $    product circSizes
+
+solve2 :: [V3 Int] -> Maybe Int
 solve2 plr = -- @@
-    Nothing
+    let
 
-solveDebug :: ParseLineResult ->  IO()
+        allPairsDist = map (\(v,w) -> (v, w , dist2 v w) ) $ makeAllPairs plr
+
+        appendMap k v = Map.alter (\ls -> Just $ v : fromMaybe [] ls) k
+
+        f mp (v,w,d) = appendMap v (w,d) mp
+
+        pairsDist0 = foldl f Map.empty
+                            $ sortOn thd3 allPairsDist
+
+        pairsDist v = fromMaybe [] (pairsDist0 Map.!? v)
+        
+        (edgs, rts) = kruskal pairsDist plr
+        
+        --em = Map.fromList $ map (\(x,y,z) -> (x,y)) edgs
+        --
+
+        lngedg = head $ sortOn (Down . thd3) edgs 
+
+        x0 = v3x $ fst3 lngedg
+        x1 = v3x $ snd3 lngedg
+
+        g mp mem v w = (appendMap w v $ appendMap v w mp, Set.insert w mem)
+        -- | Set.member v mem = (appendMap v w mp, Set.insert w mem)
+          --  | otherwise = (appendMap w v mp, Set.insert v mem)
+
+        krEdMp = fst $ foldl (\(mp, mem) (v,w,_) ->  g mp mem v w) (Map.empty, Set.fromList rts) edgs
+
+        h (a,b,_)
+            | (length $ krEdMp Map.! a) <= 1 = a
+            | otherwise = b
+
+
+--  kruskal :: (Ord a, Ord b) => (a -> [(a, b)]) -> [a] -> ([(a, a, b)], [a])
+    in
+        Just $ traceShow lngedg $ x0 * x1
+        
+
+solveDebug :: [V3 Int] ->  IO()
 solveDebug plr = do
     return ()
 --------------------------------------------------------------------------------------------

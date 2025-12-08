@@ -35,6 +35,7 @@ module MiniLinLib (
 
 import Data.Function
 import ArithEx -- Type claesses for basic arithmetic properties
+import Norms
 
 import Control.DeepSeq
 import GHC.Generics
@@ -146,10 +147,14 @@ instance (Num a) => Summable (V3 a) where
 
 instance (Num a) => Subbable (V3 a) where
     sub (V3 x y z) (V3 a b c) = 
-        V3 (x Prelude.- a) (y Prelude.- b) (z Prelude.+ c)
+        V3 (x Prelude.- a) (y Prelude.- b) (z Prelude.- c)
 
 instance (Num a) => Zero (V3 a) where
     zero = V3 0 0 0
+
+instance (Normed2 a, Num a) => Normed2 (V3 a) where
+    norm2sq (V3 x y z) = norm2sq x + norm2sq y + norm2sq z
+
 --
 -- 3D methods
 
