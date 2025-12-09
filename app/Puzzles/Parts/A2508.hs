@@ -144,9 +144,6 @@ solve2 plr = -- @@
         pairsDist v = fromMaybe [] (pairsDist0 Map.!? v)
         
         (edgs, rts) = kruskal pairsDist plr
-        
-        --em = Map.fromList $ map (\(x,y,z) -> (x,y)) edgs
-        --
 
         lngedg = head $ sortOn (Down . thd3) edgs 
 
