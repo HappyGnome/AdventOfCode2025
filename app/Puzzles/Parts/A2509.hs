@@ -64,8 +64,8 @@ exec1 inpPathBase inpPath0 inpPath1 = do
 exec2 :: String -> String -> String -> IO()
 exec2 inpPathBase inpPath0 inpPath1 = do
     let 
-        --inpPath2 = inpPathBase ++ "Test2.txt"
- {-@@-}inpPath = inpPath1         -- Choose Test or Input here 
+        inpPath2 = inpPathBase ++ "Test2.txt" -- 
+ {-@@-} inpPath = inpPath2         -- Choose Test or Input here 
 
     readParseSolve' (problemNumber ++ " / Part 2") inpPath parseLines solve2
 
@@ -119,8 +119,8 @@ solve2 plr = -- @@
 
 
         lineNbhd acc (V2 x y) (V2 x' y')
-            | x == x' = [V2 x z | z <- itvl y y'] ++ [V2 (x+ 1) z | z <- itvl y y'] ++ [V2 (x-1) z | z <- itvl y y'] ++ acc
-            | y == y' = [V2 z y | z <- itvl x x'] ++ [V2 z (y+1) | z <- itvl x x'] ++ [V2 z (y-1) | z <- itvl x x'] ++acc
+            | x == x' = [V2 (x+ 1) z | z <- itvl y y'] ++ [V2 (x-1) z | z <- itvl y y'] ++ acc
+            | y == y' = [V2 z (y+1) | z <- itvl x x'] ++ [V2 z (y-1) | z <- itvl x x'] ++acc
             | otherwise = traceShow (x,y,x',y') $ error "Diagonal line!"
             where
                 itvl a b = [(min a b)..(max a b)]
@@ -129,11 +129,25 @@ solve2 plr = -- @@
 
         badCells = traceShow (length pathNbhd) $ filter (not . insideShape plr) pathNbhd
 
+-- Original solution - slow, but should work even if the curve doubles back
+-- Some spatial indexing on the bad set could speed it up...
         checkR (V2 x0 y0, V2 x1 y1) =
-             not $ any (insideRect) badCells
+             not $ any insideRect badCells
             where
                 insideRect (V2 x y) = inItvl x0 x1 x && inItvl y0 y1 y 
                 inItvl a b x = (a <= x && x <= b) || (b <= x && x <= a)
+
+      
+-- Faster solution (no need for winding numbers :( ), and assumes 
+        checkR' (V2 x0 y0, V2 x1 y1) = and segsNoCross
+            where
+                segsNoCross = pairMap1 pm plr'
+                pm v w = (v2x v >= mx && v2x w >= mx) || (v2x v <= nx && v2x w <= nx) || (v2y v <= ny && v2y w <= ny) || (v2y v >= my && v2y w >= my)
+                mx = max x0 x1
+                nx = min x0 x1
+                my = max y0 y1
+                ny = min y0 y1
+
 
         doFind [] = 0
         doFind (p:ps)
@@ -143,6 +157,7 @@ solve2 plr = -- @@
             
     in
         Just $ doFind prs'
+        -- 1566346198
 
 solveDebug :: [V2 Int] ->  IO()
 solveDebug plr = do
