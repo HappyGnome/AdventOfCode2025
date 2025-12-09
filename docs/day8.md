@@ -18,8 +18,8 @@ There are 1000 vertices in the input, so we're looking at subgraphs of [**K1000*
 Kruskal's algoithm finds minimal spanning trees greedily, adding the shortest edge that maintains the forest property (i.e. without creating cycles) at each step. We don't really care about minimality, but we do want to find the connected components. You see, the algorithm works on disconnected graphs, and creates one tree per connected component.
 
 Without details on the annoying data-reshaping:
-1. Find the lengthe of all edges
-2. Take the top 1000 edges
+1. Find the length of all edges
+2. Take the shortest 1000 edges
 3. Run Kruskal's Algorithm on the graph with these edges, and all vertices in the input
 4. Find the size of each tree in the output of the algorithm.
 5. Take the 3 largest trees (by number of vertices), and calculate the solution.
