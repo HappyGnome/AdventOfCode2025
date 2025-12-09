@@ -1,10 +1,11 @@
+It's beginning to look a lot like...
 # Day 8 - ... Kruskal's (or adventures in K1000)
 
 **SPOILERS AHEAD**
 
 In [this](https://adventofcode.com/2025/day/8) puzzle, we are given a list of vertices in 3D with integer coordinates. Distances betweeen vertices for this puzzle are Euclidean distances. Below, _edges_ means edges in the complete (undirected, weighted) graph on these vertices, with weights given by Euclidean distances. 
 
-There are 1000 vertices in the input, so we're looking at subgraphs of [**K1000**](https://en.wikipedia.org/wiki/Complete_graph), probably the least planar graph since K1001. Not that it matters for today's puzzle.
+There are 1000 vertices in the input, so we're looking at subgraphs of [**K1000**](https://en.wikipedia.org/wiki/Complete_graph), probably the least planar graph of all t.... OMG, K1001 justy dropped! Not that it matters for today's puzzle.
 
 
 ## Part 1
