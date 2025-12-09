@@ -15,6 +15,7 @@ In the pages linked below are some brief discussions of the key points of the pr
 * [Day 6](docs/day6.md) - reading between the lines
 * [Day 7](docs/day7.md) - sided and blind tracked
 * [Day 8](docs/day8.md) - it's beginning to look a lot like....
+* [Day 9](docs/day9.md) - wind up
 
 # Project structure
 * `NextPuzzle.bat/NextPuzzle.ps1` Used to update the `cabal` and `Main.hs` files each day (run the `.bat`)
