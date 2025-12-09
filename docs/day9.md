@@ -20,7 +20,7 @@ No Christmas miracles needed for this one. Just:
     1. Are all the edges either horizontal or vertical?
     2. Can the curve double back on itself? E.g. (0,0), (0,10), (0,5)
     3. Are edges allowed to run parallel to each other with no gap? E.g. (0,0), (0,10), (1,10), (1,5)
-    4. Is the path [simple](https://en.wikipedia.org/wiki/Curve)? I.e. can it cross itslef?
+    4. Is the path [simple](https://en.wikipedia.org/wiki/Curve)? I.e. can it cross itself?
 
 * Assumption 1 seems reasonable, given the worked example in the question text. Assuming points 2-4 does not seem justified.
 
@@ -29,14 +29,14 @@ No Christmas miracles needed for this one. Just:
     ![There must be a nicer way](images/Day9_winding.png)
 
     * The recursive part (`recu`) caclulates `cnt` which is the winding number or the curve around the given point
-    * If the winding number is non-zero (or the point is in an edge) then the point is enclosed by the curve (albeit the curve doesn't necessarily wind around all points in teh same direction)
+    * If the winding number is non-zero (or the point is in an edge) then the point is enclosed by the curve (albeit the curve doesn't necessarily wind around all points in the same direction)
     * The sign of the winding number in this implementation may be incorrect!
     * It's a bit of a mess, but at least we could look at simple discrete cases because of assumption 1. Maybe there's a tidier way to write the calculation.
 
 * Testing every point in every rectangle for membership of the enclosed region would take a long time...
 * Instead, let's just check points adjacent to the curve. A rectangle contains a point not enclosed by the curve if and only if it contains one of these points (I claim - not 100% sure this is true - just using the ol' math gut).
 * This is at least feasible, but still takes 45 seconds to run!
-* Some sort of spatial indexing might help to check if the small(er) set of bad points intersects a rectangle in less time.
+* Some sort of spatial indexing might help to check more quickly whether the small(er) set of bad points intersects each rectangle.
 
 ### Bad assumptions, better algorithms:
 * It turned out later that a simpler approach still gives the correct answer (it still takes 16s though).
