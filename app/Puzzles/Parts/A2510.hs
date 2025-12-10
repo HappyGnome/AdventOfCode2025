@@ -142,29 +142,69 @@ solve2 plrs = -- @@
 
         jToM js = Map.fromList $ mapWithIndex (,) js -- Go from tgt to 0
 
-        applyBtn n = foldl (flip (Map.update (\x -> Just (x-n) ))) 
+        applyBtn n jm b =  foldl (flip (Map.update (\x -> Just (x-n) ))) jm b
 
-        btns' plr = sortOn (Down . length) $ btns plr
+        -- Get dimensions from most constrained to least
+        grps plr = map head $ sortOn length $ group $ sort $ concat $ btns plr
+        grpsM plr= Map.fromList $ mapWithIndex (flip (,)) $ grps plr
+
+        btns'' plr = map (\b -> (b,minimum $ map (grpsM plr Map.!) b)) $ btns plr
+
+        btns' plr = sortOn snd $ btns'' plr
 
         greedyN btn js = minimum $ mapMaybe (js Map.!? ) btn
-
 
 --
 --        tails [] = []
 --        tails (x:xs) = (x:xs) : tails xs
+--
+--      bfsTree :: (a -> Int -> [a]) -> (a -> Bool) -> [a] -> ([a], Int)
+--
+--      bfsMem :: (a -> Int -> b -> ([a], b)) -> (a -> b -> Bool) -> [a] -> b -> ([a], Int, b)
+--
+        dfsf0' jm cost b bs =   map (\n' -> (applyBtn n' jm b,cost+n',bs)) 
 
-        dfsf0 (jm,cost,[]) _ = [] 
-        dfsf0 (jm,cost,b:bs) _ = traceShow(jm,cost,b)$ map (\n' -> (applyBtn n' jm b,cost+n',bs)) $ reverse [0..n]
+        dfsf0 (jm,cost,[]) _ mem = ([],mem') 
+            where
+                mem' 
+                    | dfsf1 jm =  min mem cost
+                    | otherwise = mem
+
+        dfsf0 (jm,cost,[(b,_)]) _ mem
+            | cost > mem = ([],mem)
+            | otherwise = (dfsf0' jm cost b [] [n],mem')
             where
                 n = greedyN b jm
 
-        dfsf1 (jm,cost,bs)
-            | any (<0) jm = error "err 0"
+                pass = dfsf1 jm
+                mem' 
+                    | pass =  min mem cost
+                    | otherwise = mem
+
+        dfsf0 (jm,cost,bp:bp':bs) _ mem
+            | cost > mem = ([],mem) 
+            | bw == bw' =  (dfsf0' jm cost b (bp':bs) $ reverse [0..n], mem') -- reverse not needed?
+            | otherwise =  (dfsf0' jm cost b (bp':bs) [n], mem') -- Last vector for this head is constrained
+            where
+                (b,bw) = bp
+                (b',bw') = bp'
+                n = greedyN b jm
+                pass = dfsf1 jm
+                mem' 
+                    | pass =  min cost mem
+                    | otherwise = mem
+
+        dfsf1 jm
+            | any (<0) jm = traceShow jm $ error "err 0"
             | otherwise = all (== 0) jm
 
-        doDfs plr = traceShow (btns' plr) $ dfSearch dfsf0 dfsf1 [(jToM $ jltg plr, 0, btns' plr)]
+        doBfs plr = traceShow (btns' plr) $ bfsMem dfsf0 (\ _ _ -> False) [(jToM $ jltg plr, 0, btns' plr)] 999999999
+
+        doBfs' plr = traceShow y $ y
+            where 
+                y = doBfs plr
     in
-        Just $ sum $  mapMaybe (fmap (snd3 . fst) . doDfs) plrs
+        Just $ sum $  map (thd3 . doBfs') plrs
 
 solveDebug :: [ParseLineResult] ->  IO()
 solveDebug plr = do
