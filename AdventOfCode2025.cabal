@@ -67,7 +67,7 @@ executable AdventOfCode2025
                     --,Test_PuzzleAlgorithm
                     ,Norms
                     ,ArithEx
-                    ,A2509
+                    ,A2510
                 --^^Current^^
 
     -- LANGUAGE extensions used by modules in this package.
@@ -97,6 +97,7 @@ executable AdventOfCode2025
 
     -- Base language which the package is written in.
     default-language: Haskell2010
+
 
 
 

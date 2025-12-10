@@ -36,7 +36,7 @@ import Data.Maybe
 import qualified Data.SortedList as SList
 import Data.Tuple
 import Data.Tuple.Extra
--- import Debug.Trace
+import Debug.Trace
 
 -- import GHC.Base
 import Shorts
@@ -280,10 +280,10 @@ dfSearch :: (a -> Int -> [a]) -> (a -> Bool) -> [a] -> Maybe (a, Int)
 dfSearch gen pass seed =
   let -- step :: [[a]] -> Int -> Maybe (a,Int)
       step [] _ = Nothing
-      step ([] : stk) lvl = step stk (lvl - 1)
+      step ([] : stk) lvl = traceShow (lvl -1, sum $ map length stk) $ step stk (lvl - 1)
       step ((x : xs) : stk) lvl
         | pass x = Just (x, lvl)
-        | otherwise = step stk' (lvl + 1)
+        | otherwise = traceShow (lvl+1, sum $ map length stk') $ step stk' (lvl + 1)
         where
           stk' = gen x lvl : xs : stk
    in step [seed] 0
