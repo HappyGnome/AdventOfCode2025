@@ -66,7 +66,7 @@ exec2 :: String -> String -> String -> IO()
 exec2 inpPathBase inpPath0 inpPath1 = do
     let 
        inpPath2 = inpPathBase ++ "Test3.txt"
- {-@@-}inpPath = inpPath2         -- Choose Test or Input here 
+ {-@@-}inpPath = inpPath1         -- Choose Test or Input here 
 
     readParseSolve' (problemNumber ++ " / Part 2") inpPath parseLines solve2
 
@@ -139,7 +139,7 @@ solve2 plr = -- @@
         nd = "out"
         inclu = ["dac","fft"]
 
-        recu' mem nd' vstd = foldl (\(i,m) cs -> first (+ i) $ recu cs mem nd' vstd) (0,mem)
+        recu' mem nd' vstd = foldl (\(i,m) cs -> first (+ i) $ recu cs m nd' vstd) (0,mem) -- Don't mess up the memo-ization here. That would be bad.
         recu cs mem nd' vstd 
             | Set.member cs vstd = trace "Loop!" $ (0,Map.insert cs 0 mem)
             | cs == nd' = (1,mem)
@@ -149,13 +149,13 @@ solve2 plr = -- @@
                 remd = mem Map.!? cs
                 (res,mem') = recu' mem nd' vstd' $ fromMaybe [] $  mp Map.!? cs
                 mem'' =  Map.insert cs res mem'
-                vstd' = Set.insert cs vstd 
+                vstd' = {-traceShow cs $-} Set.insert cs vstd 
 
         fft = "fft"
         dac = "dac"
 
-        st2F = trace "st2F" $ fst $ recu st Map.empty fft           Set.empty
-        st2D = trace "st2D" $ fst $ recu st Map.empty dac Set.empty
+        st2F = trace "st2F"  $ fst $ recu st Map.empty fft           Set.empty
+        st2D = trace "st2D"  $ fst $ recu st Map.empty dac Set.empty
         dac2F =trace "dac2F" $ fst $ recu dac Map.empty fft Set.empty
         dac2N =trace "dac2N" $ fst $ recu dac Map.empty nd Set.empty
         fft2D =trace "fft2D" $ fst $ recu fft Map.empty dac Set.empty
