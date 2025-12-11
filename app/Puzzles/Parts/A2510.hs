@@ -145,10 +145,10 @@ solve2 plrs = -- @@
         applyBtn n jm b =  foldl (flip (Map.update (\x -> Just (x-n) ))) jm b
 
         -- Get dimensions from most constrained to least
-        grps plr = map head $ sortOn length $ group $ sort $ concat $ btns plr
-        grpsM plr= Map.fromList $ mapWithIndex (flip (,)) $ grps plr
+        grps plr = map head $ sortOn length $ group $ sort $ concat $ btns plr 
+        grpsM plr= traceShow (sortOn length $ group $ sort $ concat $ btns plr) $ mapWithIndex (,) $ grps plr
 
-        btns'' plr = map (\b -> (b,minimum $ map (grpsM plr Map.!) b)) $ btns plr
+        btns'' plr = traceShow (grpsM plr) $ fst $ foldl (\(acc,bs) (idx,k) -> (acc ++ map (\b -> (b,idx)) (filter (elem k) bs), filter (not . elem k) bs)) ([] ,btns plr) $ grpsM plr -- map (\b -> (b,minimum $ map (grpsM plr Map.!) b)) $ btns plr
 
         btns' plr = sortOn snd $ btns'' plr
 
@@ -161,6 +161,8 @@ solve2 plrs = -- @@
 --      bfsTree :: (a -> Int -> [a]) -> (a -> Bool) -> [a] -> ([a], Int)
 --
 --      bfsMem :: (a -> Int -> b -> ([a], b)) -> (a -> b -> Bool) -> [a] -> b -> ([a], Int, b)
+--
+--     dfsMem :: (a -> Int -> b -> ([a], b)) -> (a -> b -> Bool) -> [a] -> b -> (Maybe (a, Int), b)
 --
         dfsf0' jm cost b bs =   map (\n' -> (applyBtn n' jm b,cost+n',bs)) 
 
@@ -198,13 +200,13 @@ solve2 plrs = -- @@
             | any (<0) jm = traceShow jm $ error "err 0"
             | otherwise = all (== 0) jm
 
-        doBfs plr = traceShow (btns' plr) $ bfsMem dfsf0 (\ _ _ -> False) [(jToM $ jltg plr, 0, btns' plr)] 999999999
+        doDfs plr = traceShow (btns' plr) $ dfsMem dfsf0 (\ _ _ -> False) [(jToM $ jltg plr, 0, btns' plr)] 999999999
 
-        doBfs' plr = traceShow y $ y
+        doDfs' plr = traceShow y y
             where 
-                y = doBfs plr
+                y = doDfs plr
     in
-        Just $ sum $  map (thd3 . doBfs') plrs
+        Just $ sum $  map (snd . doDfs') plrs
 
 solveDebug :: [ParseLineResult] ->  IO()
 solveDebug plr = do

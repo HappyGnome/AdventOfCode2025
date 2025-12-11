@@ -10,11 +10,11 @@ of style and logic. This is a learning project for the author.
 
 module Main where
 
-import A2510 -- <<Current<< 
+import A2511 -- <<Current<< 
 
 main :: IO ()
 main = do
-    A2510.exec -- <<Current<< 
+    A2511.exec -- <<Current<< 
 
 
 
