@@ -12,6 +12,8 @@ of style and logic. This is a learning project for the author, and has been prep
 {-# OPTIONS_GHC -Wno-unused-matches #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
+{-# LANGUAGE TupleSections #-}
+
 module A2510 where
 
 import Text.Read
@@ -130,6 +132,7 @@ solve1 rng plrs = -- @@
     in
         Just $ sum $  map (snd3 . doBfs) plrs
 
+{-
 solve2 :: [ParseLineResult] -> Maybe Int
 solve2 plrs = -- @@
     let 
@@ -144,15 +147,27 @@ solve2 plrs = -- @@
 
         applyBtn n jm b =  foldl (flip (Map.update (\x -> Just (x-n) ))) jm b
 
+        lazyLookup f k mp
+            | isJust y = (y, mp)
+            | otherwise = (z, Map.insert k z mp)
+            where 
+                y = mp Map.!? k
+                z = f k
+
         -- Get dimensions from most constrained to least
         grps plr = map head $ sortOn length $ group $ sort $ concat $ btns plr 
-        grpsM plr= traceShow (sortOn length $ group $ sort $ concat $ btns plr) $ mapWithIndex (,) $ grps plr
+        grpsM plr= traceShow ("TS0",sortOn length $ group $ sort $ concat $ btns plr) $ mapWithIndex (,) $ grps plr
 
-        btns'' plr = traceShow (grpsM plr) $ fst $ foldl (\(acc,bs) (idx,k) -> (acc ++ map (\b -> (b,idx)) (filter (elem k) bs), filter (not . elem k) bs)) ([] ,btns plr) $ grpsM plr -- map (\b -> (b,minimum $ map (grpsM plr Map.!) b)) $ btns plr
+        splitMatchesWith f g xs = (map g $ filter f xs, filter (not . f) xs)
 
-        btns' plr = sortOn snd $ btns'' plr
+        btns'' plr = traceShow ("TS1",grpsM plr) $ fst $ foldl (\(acc,bs) (idx,k) -> first (acc++) $ splitMatchesWith (elem k) (,idx,k) bs) ([] ,btns plr) $ grpsM plr -- map (\b -> (b,minimum $ map (grpsM plr Map.!) b)) $ btns plr
+
+        btns' plr = map (\(b,_,k) -> (b,k)) $ sortOn snd3 $ btns'' plr
 
         greedyN btn js = minimum $ mapMaybe (js Map.!? ) btn
+        -- Use size of target numbers per coordinate too?
+        -- write method to check block of btns with common constraint? (might be tidier)
+        -- 
 
 --
 --        tails [] = []
@@ -164,17 +179,17 @@ solve2 plrs = -- @@
 --
 --     dfsMem :: (a -> Int -> b -> ([a], b)) -> (a -> b -> Bool) -> [a] -> b -> (Maybe (a, Int), b)
 --
-        dfsf0' jm cost b bs =   map (\n' -> (applyBtn n' jm b,cost+n',bs)) 
+        dfsf0' jm cost b bs ll = map (\n' -> (applyBtn n' jm b,cost+n',bs)) 
 
-        dfsf0 (jm,cost,[]) _ mem = ([],mem') 
+        dfsf0 (jm,cost,[]) _ (mem,ll) = ([],mem') 
             where
                 mem' 
                     | dfsf1 jm =  min mem cost
                     | otherwise = mem
 
-        dfsf0 (jm,cost,[(b,_)]) _ mem
+        dfsf0 (jm,cost,[(b,_)]) _ (mem,ll)
             | cost > mem = ([],mem)
-            | otherwise = (dfsf0' jm cost b [] [n],mem')
+            | otherwise = (step0,(mem',ll0))
             where
                 n = greedyN b jm
 
@@ -182,31 +197,127 @@ solve2 plrs = -- @@
                 mem' 
                     | pass =  min mem cost
                     | otherwise = mem
+                (step0, ll0) =dfsf0' jm cost b [] [n] ll
 
-        dfsf0 (jm,cost,bp:bp':bs) _ mem
-            | cost > mem = ([],mem) 
-            | bw == bw' =  (dfsf0' jm cost b (bp':bs) $ reverse [0..n], mem') -- reverse not needed?
-            | otherwise =  (dfsf0' jm cost b (bp':bs) [n], mem') -- Last vector for this head is constrained
+        dfsf0 (jm,cost,bp:bp':bs) _ (mem,ll)
+            | cost > mem = ([],(mem,ll)) 
+            | bw == bw' =  (step1, (mem',ll1)) -- reverse not needed?
+            | n >=m  = (step0, (mem',ll0)) -- Last vector for this head is constrained, and can match the constraint
+            | otherwise =  ([], (mem,ll)) -- Last vector for this head is constrained, but constraint not satisfiable
             where
                 (b,bw) = bp
                 (b',bw') = bp'
                 n = greedyN b jm
+                m = jm Map.! bw -- Number of presses required by active constraint
                 pass = dfsf1 jm
                 mem' 
                     | pass =  min cost mem
                     | otherwise = mem
-
+                (step0,ll0) =dfsf0' jm cost b (bp':bs) [m] ll
+                (step1,ll1) =(dfsf0' jm cost b (bp':bs) $ reverse [0..n] ll
         dfsf1 jm
             | any (<0) jm = traceShow jm $ error "err 0"
             | otherwise = all (== 0) jm
 
-        doDfs plr = traceShow (btns' plr) $ dfsMem dfsf0 (\ _ _ -> False) [(jToM $ jltg plr, 0, btns' plr)] 999999999
+        doDfs plr = traceShow ("TS2",btns' plr) $ dfsMem dfsf0 (\ _ _ -> False) [(jToM $ jltg plr, 0, btns' plr)] 999999999
 
-        doDfs' plr = traceShow y y
+        doDfs' plr = traceShow ("TS3",y) y
             where 
                 y = doDfs plr
     in
         Just $ sum $  map (snd . doDfs') plrs
+-}
+
+solve2 :: [ParseLineResult] -> Maybe Int
+solve2 plrs = -- @@
+    let 
+        
+        mapWithIndex f xs = reverse $ fst $ foldl (\(acc,i) x -> (f i x : acc , i+1)) ([],0)  xs
+
+        jToM js = Map.fromList $ mapWithIndex (,) js -- Go from tgt to 0
+
+        applyBtn n jm b =  foldl (flip (Map.update (\x -> Just (x-n) ))) jm b
+        applyBtn1 jm b =  foldl (flip (Map.update (\x -> Just (x-1) ))) jm b
+
+--        lazyLookup f k mp
+--            | isJust y = (y, mp)
+--            | otherwise = (z, Map.insert k z mp)
+--            where 
+--                y = mp Map.!? k
+--                z = f k
+
+        -- Get dimensions from most constrained to least
+
+        -- [[Int]] -> [(Int,Int)]   (indx, btn dof)
+        grps bs = map (\xss -> (head xss,length xss)) $ group $ sort $ concat $ bs
+        
+        choose m n
+            | n < 1 = 1
+            | otherwise = (m `div` n) * choose (m-1) (n-1)
+
+        costs jm bs = sortOn (\(_,x,y) -> choose (x+y-1) (y-1)) $ map (\(idx,dof) -> (idx,  (fromMaybe 0 $ jm Map.!? idx), dof)) $ grps bs
+
+        splitMatchesWith f g xs = (map g $ filter f xs, filter (not . f) xs)
+
+       -- btns'' plr = traceShow ("TS1",grpsM plr) $ fst $ foldl (\(acc,bs) (idx,k) -> first (acc++) $ splitMatchesWith (elem k) (,idx,k) bs) ([] ,btns plr) $ grpsM plr -- map (\b -> (b,minimum $ map (grpsM plr Map.!) b)) $ btns plr
+
+     --   btns' plr = map (\(b,_,k) -> (b,k)) $ sortOn snd3 $ btns'' plr
+
+        -- Max n.o. times we can press this button
+        greedyN btn js = minimum $ mapMaybe (js Map.!? ) btn
+
+        --  if known to be constrained, take exactly this many steps to satisfy the constraint (if it's <= greedyN) 
+       -- consN (_,bk) js = fromMaybe 0 $ js Map.!? bk
+        
+
+        -- Get groups of indexes
+        -- calc minimal "complexity" index (n + m - 1 C m - 1) where n = tgt number for the index, m = number of btns wth index
+        -- get all btns with "least complex" index, Get all valid combos (i.e. w/o violating other constraints)
+        -- for each valid combo, subtract from tgt and repeat with remaining btns
+        
+        isSoln = all (==0)
+
+        -- Map Int Int -> Int -> [[Int]] -> ??* -> Int  *Whatever bestSearch needs
+        recu jm k [] css 
+            | isSoln jm = 0
+            | fromMaybe 1 (jm Map.!? k) /= 0 = 99999999
+            | cs' == [] = 9999999999
+            | otherwise = {-traceShow ("next Key",k',jm,cs',css') $-} recu jm k' cs' css'
+            where 
+                (k', cs' , css') =  bestSearch jm css
+
+        recu jm k [b] css = {-trace "P1" $-} n + recu jm' k [] css -- Constrained choice, take greedily, see if it's enough
+            where 
+                jm' = applyBtn n jm b
+                n = greedyN b jm
+
+        recu jm k (b:bs) css 
+            | any(<0) jm = 9999999999
+            |otherwise = {- trace "P2" $-} min (recu jm k bs css) (1 + recu jm' k (b:bs) css)
+            where 
+                jm' = applyBtn1 jm b
+
+        
+        -- css =  [btns]
+        bestSearch jm [] = (0,[],[])
+        bestSearch jm [b] = (head b,[b],[])
+
+        bestSearch jm bs = {-traceShow (k,bs',cs) $-} (k,bs',cs)
+            where
+                csts = costs jm bs
+                k = {-traceShow csts $-} fst3 $ head $ csts
+                (bs',cs) = splitMatchesWith (elem k) id bs
+
+        
+        doSrch plr = traceShow plr $ recu jm k bs' cs
+            where
+                jm = jToM $ jltg plr
+                bs = btns plr
+                (k,bs', cs ) = bestSearch jm bs
+
+    in
+        Just $ sum $  map doSrch plrs
+
 
 solveDebug :: [ParseLineResult] ->  IO()
 solveDebug plr = do

@@ -67,7 +67,7 @@ executable AdventOfCode2025
                     --,Test_PuzzleAlgorithm
                     ,Norms
                     ,ArithEx
-                    ,A2511
+                    ,A2510
                 --^^Current^^
 
     -- LANGUAGE extensions used by modules in this package.
