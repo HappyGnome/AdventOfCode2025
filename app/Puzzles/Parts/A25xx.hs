@@ -12,6 +12,8 @@ of style and logic. This is a learning project for the author, and has been prep
 {-# OPTIONS_GHC -Wno-unused-matches #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
+--{-# LANGUAGE TupleSections #-}
+
 module A25xx where -- <<Current<<
 
 import Text.Read
@@ -55,7 +57,7 @@ exec1 :: String -> String -> String -> IO()
 exec1 inpPathBase inpPath0 inpPath1 = do
     let 
         --inpPath2 = inpPathBase ++ "Test2.txt"
-{-@@-}inpPath = inpPath1         -- Choose Test or Input here 
+{-@@-}inpPath = inpPath0         -- Choose Test or Input here 
 
     readParseSolve' (problemNumber ++ " / Part 1") inpPath parseLines solve1
 
@@ -65,7 +67,7 @@ exec2 :: String -> String -> String -> IO()
 exec2 inpPathBase inpPath0 inpPath1 = do
     let 
         --inpPath2 = inpPathBase ++ "Test2.txt"
- {-@@-}inpPath = inpPath1         -- Choose Test or Input here 
+ {-@@-}inpPath = inpPath0         -- Choose Test or Input here 
 
     readParseSolve' (problemNumber ++ " / Part 2") inpPath parseLines solve2
 
