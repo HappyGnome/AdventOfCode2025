@@ -425,7 +425,7 @@ permuteRand gen ls =
 
         (gen',ord) = foldl genOne (gen,[]) ls
     in 
-       trace (show ord) $ ( gen', map snd $ sortOn fst $ zip ord ls)
+       ( gen', map snd $ sortOn fst $ zip ord ls)
 
 -------------------------------------------------------
 
