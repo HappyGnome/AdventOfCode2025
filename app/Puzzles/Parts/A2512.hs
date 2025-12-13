@@ -12,7 +12,7 @@ of style and logic. This is a learning project for the author, and has been prep
 {-# OPTIONS_GHC -Wno-unused-matches #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
---{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TupleSections #-}
 
 module A2512 where
 
@@ -59,8 +59,8 @@ exec = do
 exec1 :: String -> String -> String -> IO()
 exec1 inpPathBase inpPath0 inpPath1 = do
     let 
-        --inpPath2 = inpPathBase ++ "Test2.txt"
-{-@@-}inpPath = inpPath1         -- Choose Test or Input here 
+        inpPath2 = inpPathBase ++ "Test2.txt"
+{-@@-}  inpPath = inpPath1         -- Choose Test or Input here 
 
     --rng <- newRNG
     readParseSolve' (problemNumber ++ " / Part 1") inpPath parseLines solve1
@@ -120,7 +120,7 @@ parseLines ls =
 data Tile = Tile {sqrs ::[V2 Int], nbrs :: [V2 Int]} deriving (Show, Eq, Ord)
 
 type Hints = [V2 Int]
-data CountElt = CountElt {tgt ::Int, isoHint :: Map.Map Tile Hints, repTile ::Tile} deriving (Show, Eq)
+data CountElt = CountElt {tgtCount ::Int, shapes :: [Tile]} deriving (Show, Eq)
 --
 --instance Ord CountElt where
 --   compare = compare `on` (\c -> (tgt c, repTile c)) 
@@ -128,53 +128,96 @@ data CountElt = CountElt {tgt ::Int, isoHint :: Map.Map Tile Hints, repTile ::Ti
 solve1 :: ([[V2 Int]], [ParseLineResult]) ->  Maybe Int
 solve1 (vss,plrs) = -- @@
     let
-        shps = map makeIso vss
+        allShapes = map makeIso vss
 
-        -- [([Tile], Int)]
-        tileCounts plr = map (first $ (!!) shps) $ counts plr
+        -- Map Int CountElt
+        tileCounts plr = Map.mapWithKey (\k v -> CountElt v $ allShapes !! k) $ Map.fromList $ counts plr
 
-        hints0 plr t = initTryAts (area plr) $ sqrs t
-
-        initCe plr (vss', i) = CountElt i (Map.fromList $ map (\t -> (t, hints0 plr t)) vss') $ head vss'
-
-
-        -- Set V2 ->CountElt -> [(Set V2, Maybe CountElt)] -- Empty list => no solution, ce == Nothing => All elts placed for this iso
-        tryCE st (CountElt 0 _ _) = [(st,Nothing)]
-        tryCE st ce =
-            filter ( (||) (tgt'== 0) . isJust . snd )  $ map (\(t,s,h) -> (s , updIsoHint t h )) flat
-            where 
-                isoMp = isoHint ce
-                tgt' = tgt ce - 1
-
-                -- Could also memo-ize on st & counts combinations?
-                
-                -- Map Tile (Set V2,Hints)
-                mp = Map.mapMaybeWithKey (tryFit st) isoMp
-
-                -- Shortcut possible : tgt > hints => fail
-                flat = filter ((<=) tgt' . length . thd3 ) $ map (\(k, (x,y)) -> (k,x,y)) $ Map.toList mp
-
-                updIsoHint _ [] = Nothing
-                updIsoHint t h = Just $ CountElt tgt' (Map.insert t h isoMp) (repTile ce)
-                
-
-        -- Set (V2 Int) -> Map Int CountElt -> Int -> [(Set (V2 Int) ,Map Int CountElt)]
-        procElt st mp i = 
-            let 
-                scs = tryCE st $ mp Map.! i
+        freeSpaceCount (x,y) tcs =
+            let
+                tcarea (CountElt i ts) = i * length (sqrs $ head ts)
             in
-                map (\(st', ce) -> (st', Map.update (const ce) i mp)) scs
-                
-            
-        -- Set (V2 Int) -> Map Int CountElt -> Set (CountElt, Set V2 Int) -> Bool
-        recu st ces
-            | Map.null ces = True
-            | elem [] childs = False
-            | otherwise = any (any (uncurry recu )) childs
-            where
-                kys = Map.keys ces
+                x * y - sum (Map.map tcarea tcs)
 
-                childs = map (procElt st ces) kys
+        augTileCounts plr
+            | fsc >= 0 = Just  $ Map.insert 1000 (CountElt fsc [Tile [V2 0 0] []]) $ tcs
+            | otherwise = Nothing
+            where 
+                tcs = tileCounts plr
+                ar = area plr
+                fsc = freeSpaceCount ar tcs
+        
+        
+        searchPath (rows,cols) = [V2 x y | x <- [0..(rows-1)], y <- [0..(cols-1)]]
+
+        -- [V2 Int] -> Set V2 -> Map Int CountElt -> [([V2 Int],Set V2, Map Int CountElt)]
+        dfsf0 [] _ _ _ = []
+        dfsf0 (x:xs) st cts _ = 
+            let
+                countElt' (i,CountElt tgt shs)
+                    | tgt <= 0 = []
+                    | otherwise = map (i, , CountElt (tgt - 1) shs) shs
+
+                tryCEs = concatMap countElt' $ Map.toList cts
+                
+                fits = filter (\(_,s,_ ) -> canFit st s x ) tryCEs
+
+                place (i, sh, ce) = (xs, placeAt x sh st, Map.insert i ce cts)
+
+                withOptSkip ls
+                    | Set.member x st = (xs,st,cts) : ls
+                    | otherwise = ls
+            in
+                withOptSkip $ map place fits
+
+        dfsf1 _ _ = all ((<= 0) . tgtCount)
+    
+        
+            
+
+
+--        hints0 plr t = initTryAts (area plr) $ sqrs t
+--
+--        initCe plr (vss', i) = CountElt i (Map.fromList $ map (\t -> (t, hints0 plr t)) vss') $ head vss'
+--
+--
+--        -- Set V2 ->CountElt -> [(Set V2, Maybe CountElt)] -- Empty list => no solution, ce == Nothing => All elts placed for this iso
+--        tryCE st (CountElt 0 _ _) = [(st,Nothing)]
+--        tryCE st ce =
+--            filter ( (||) (tgt'== 0) . isJust . snd )  $ map (\(t,s,h) -> (s , updIsoHint t h )) flat
+--            where 
+--                isoMp = isoHint ce
+--                tgt' = tgt ce - 1
+--
+--                -- Could also memo-ize on st & counts combinations?
+--                
+--                -- Map Tile (Set V2,Hints)
+--                mp = Map.mapMaybeWithKey (tryFit st) isoMp
+--
+--                -- Shortcut possible : tgt > hints => fail
+--                flat = filter ((<=) tgt' . length . thd3 ) $ map (\(k, (x,y)) -> (k,x,y)) $ Map.toList mp
+--
+--                updIsoHint _ [] = Nothing
+--                updIsoHint t h = Just $ CountElt tgt' (Map.insert t h isoMp) (repTile ce)
+--                
+--
+--        -- Set (V2 Int) -> Map Int CountElt -> Int -> [(Set (V2 Int) ,Map Int CountElt)]
+--        procElt st mp i = 
+--            let 
+--                scs = tryCE st $ mp Map.! i
+--            in
+--                map (\(st', ce) -> (st', Map.update (const ce) i mp)) scs
+--                
+--            
+--        -- Set (V2 Int) -> Map Int CountElt -> Set (CountElt, Set V2 Int) -> Bool
+--        recu st ces
+--            | Map.null ces = True
+--            | elem [] childs = False
+--            | otherwise = any (any (uncurry recu )) childs
+--            where
+--                kys = Map.keys ces
+--
+--                childs = map (procElt st ces) kys
                 
 
 
@@ -189,21 +232,16 @@ solve1 (vss,plrs) = -- @@
 --            in
 --                any (recu ar ((tile:tiles,tgtN - 1):tcs)) sts || onSkip
 --
-        checkPlr plr = 
-             recu (initSt $ area plr) $ Map.fromList $ mapWithIndex (curry (second $ initCe plr)) $ tileCounts plr
+        checkPlr plr
+            | Nothing <- atc = trace "Trivial case" $ Nothing -- More present tiles than space in the region
+            | Just atc' <- atc =  dfSearch (uncurry3 dfsf0) (uncurry3 dfsf1) [(searchPath ar, initSt ar,atc')]
+            where
+                ar = area plr
+                atc = augTileCounts plr
 
-        checkPlr' (fails, passs)  plr
-            | easierProblems fails plr > 0 = trace "found easier" $ (plr : fails, passs)
-            | harderProblems passs plr > 0 =  trace "found harder" $(fails,plr : passs)
-            | otherwise = (fails', passs')
-            where 
-                chkr = checkPlr plr
-                (fails',passs') = if chkr then (fails, plr : passs) else (plr : fails, passs)
-
-        plrs' = sortOn (easierProblems plrs) plrs
 
     in
-        traceShow plrs' $ Just $ length $ snd $ foldl checkPlr' ([],[]) $ plrs'
+        traceShow plrs $ Just $ length $ mapMaybe checkPlr plrs
 
 
 solve2 :: ([[V2 Int]], [ParseLineResult]) -> Maybe Int
@@ -213,7 +251,7 @@ solve2 (vss,plrs) = -- @@
 solveDebug :: ([[V2 Int]], [ParseLineResult]) ->  IO()
 solveDebug (vss,plrs) = do
     let
-        shps = map makeIso vss
+        allShapes = map makeIso vss
         
         toMp vs = Map.fromList $ map (\v -> (v,True)) vs
 
@@ -223,7 +261,7 @@ solveDebug (vss,plrs) = do
         ren Nothing = '.'
         ren _ = '#'
 
-        doRender vs = renderGrid (maxX vs) (maxY vs) ren (toMp vs)
+        doRender (Tile vs _) = renderGrid (maxX vs) (maxY vs) ren (toMp vs)
 
         -- use mapM_ ?
         doRender' i0 vss' = foldl (\i0 vs -> i0 >> doRender vs >> putStrLn " ") i0 vss'
@@ -231,7 +269,7 @@ solveDebug (vss,plrs) = do
         
 
     --renderGrid ::  Int -> Int -> (Maybe b -> Char) -> Map.Map (V2 Int) b -> IO()
-    --traceShow (sum $ map length shps) $ doRender'' shps (return())
+    traceShow (sum $ map length allShapes) $ doRender'' allShapes (return())
     return ()
 --------------------------------------------------------------------------------------------
 -- Business
@@ -250,7 +288,7 @@ recentre [] = []
 recentre vs =
     let
         x0 = minimum $ map v2x vs
-        y0 = minimum $ map v2y vs
+        y0 = minimum $ map v2y $ filter ((== x0) . v2x) vs
 
     in
         map (`sub` V2 x0 y0) vs
@@ -272,7 +310,7 @@ makeIso vs =
 
         tsraw =  nub $ map (doRot vs) rots -- Account for symmetries
     in
-        map mkTile tsraw  
+         map mkTile tsraw  
 
 
 
