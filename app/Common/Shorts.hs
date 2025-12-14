@@ -67,10 +67,12 @@ module Shorts (
     ,permuteRand
     ,consAt
     ,toMapCons
+    ,binomialC
+
 ) where
 
 --import Data.Function
-import Data.List (sortOn)
+import Data.List (sortOn,foldl')
 --import Data.List.Extra (groupOnKey)
 --import Data.Word
 import Data.Time.Clock.System
@@ -78,6 +80,8 @@ import System.Random
 import Debug.Trace
 import Data.Maybe
 import qualified Data.Map as Map
+import Data.Bifunctor
+import qualified Data.Set as Set
 
 ----------------------------------------------------- 
 -- Grid helpers
@@ -142,7 +146,7 @@ splitOnPred f css =
 
         fin (acc0, cs) = acc0 ++ [cs]
     in
-        fin $ foldl g ([],[]) css 
+        fin $ foldl' g ([],[]) css 
 ------------------------------------------------------
 
 -- | left fold pairs from a list, with stride 1
@@ -439,5 +443,11 @@ toMapCons :: (Ord a) => [(a,b)] -> Map.Map a [b]
 toMapCons = 
     foldl (\mp (x,y) -> consAt x y mp) Map.empty
 
+-------------------------------------------------------
+binomialC :: (Integral a) => a -> a -> a
+binomialC m n
+    | n > m = 0
+    | n < 1 = 1
+    | otherwise =  product [1 .. m] `div` product [1 .. n]
 
-
+-------------------------------------------------------

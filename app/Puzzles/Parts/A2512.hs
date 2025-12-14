@@ -140,8 +140,8 @@ solve1 (vss,plrs) = -- @@
                 x * y - sum (Map.map tcarea tcs)
 
         augTileCounts plr
-            | fsc >= 0 = Just  $ Map.insert 1000 (CountElt fsc [Tile [V2 0 0] []]) $ tcs
-            | otherwise = Nothing
+            | fsc >= 0 = Just  $ Map.insert 1000 (CountElt fsc [Tile [V2 0 0] []]) tcs
+            | otherwise = Just tcs -- Nothing
             where 
                 tcs = tileCounts plr
                 ar = area plr

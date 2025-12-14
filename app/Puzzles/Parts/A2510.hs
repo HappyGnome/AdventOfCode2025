@@ -36,6 +36,7 @@ import PuzzleAlgorithm
 import Shorts
 import Norms
 import ArithEx
+import Memoize
 
 
 problemNumber :: String
@@ -57,12 +58,12 @@ exec = do
 -- Entry point for Part 1
 exec1 :: String -> String -> String -> IO()
 exec1 inpPathBase inpPath0 inpPath1 = do
-    rng <- newRNG
     let 
         --inpPath2 = inpPathBase ++ "Test2.txt"
 {-@@-}inpPath = inpPath1         -- Choose Test or Input here 
 
-    readParseSolve' (problemNumber ++ " / Part 1") inpPath parseLines (solve1 rng)
+    readParseSolve' (problemNumber ++ " / Part 1") inpPath parseLines solve1
+    -- 447
 
 --------------------------
 -- Entry point for Part 2
@@ -73,6 +74,7 @@ exec2 inpPathBase inpPath0 inpPath1 = do
  {-@@-}inpPath = inpPath1         -- Choose Test or Input here 
 
     readParseSolve' (problemNumber ++ " / Part 2") inpPath parseLines solve2
+    --18960
 
 --------------------------
 -- Entry point for optional debug ops
@@ -106,8 +108,8 @@ parseLines ls =
 --------------------------------------------------------------------------------------------
 -- Solver
 
-solve1 :: (RandomGen g) => g -> [ParseLineResult] ->  Maybe Int
-solve1 rng plrs = -- @@
+solve1 ::  [ParseLineResult] ->  Maybe Int
+solve1 plrs = -- @@
    -- dfSearch :: (a -> Int -> [a]) -> (a -> Bool) -> [a] -> Maybe (a, Int)
    -- permuteRand :: (RandomGen g) => g -> [a] -> (g,[a])
 -- bfsMem :: (a -> Int -> b -> ([a], b)) -> (a -> b -> Bool) -> [a] -> b -> ([a], Int, b)
@@ -132,112 +134,19 @@ solve1 rng plrs = -- @@
     in
         Just $ sum $  map (snd3 . doBfs) plrs
 
-{-
-solve2 :: [ParseLineResult] -> Maybe Int
-solve2 plrs = -- @@
-    let 
-
-   -- dfSearch :: (a -> Int -> [a]) -> (a -> Bool) -> [a] -> Maybe (a, Int)
-        lgts0 = False : lgts0
-        --lgtsEq = all (uncurry (==)) . zip
-        
-        mapWithIndex f xs = reverse $ fst $ foldl (\(acc,i) x -> (f i x : acc , i+1)) ([],0)  xs
-
-        jToM js = Map.fromList $ mapWithIndex (,) js -- Go from tgt to 0
-
-        applyBtn n jm b =  foldl (flip (Map.update (\x -> Just (x-n) ))) jm b
-
-        lazyLookup f k mp
-            | isJust y = (y, mp)
-            | otherwise = (z, Map.insert k z mp)
-            where 
-                y = mp Map.!? k
-                z = f k
-
-        -- Get dimensions from most constrained to least
-        grps plr = map head $ sortOn length $ group $ sort $ concat $ btns plr 
-        grpsM plr= traceShow ("TS0",sortOn length $ group $ sort $ concat $ btns plr) $ mapWithIndex (,) $ grps plr
-
-        splitMatchesWith f g xs = (map g $ filter f xs, filter (not . f) xs)
-
-        btns'' plr = traceShow ("TS1",grpsM plr) $ fst $ foldl (\(acc,bs) (idx,k) -> first (acc++) $ splitMatchesWith (elem k) (,idx,k) bs) ([] ,btns plr) $ grpsM plr -- map (\b -> (b,minimum $ map (grpsM plr Map.!) b)) $ btns plr
-
-        btns' plr = map (\(b,_,k) -> (b,k)) $ sortOn snd3 $ btns'' plr
-
-        greedyN btn js = minimum $ mapMaybe (js Map.!? ) btn
-        -- Use size of target numbers per coordinate too?
-        -- write method to check block of btns with common constraint? (might be tidier)
-        -- 
-
---
---        tails [] = []
---        tails (x:xs) = (x:xs) : tails xs
---
---      bfsTree :: (a -> Int -> [a]) -> (a -> Bool) -> [a] -> ([a], Int)
---
---      bfsMem :: (a -> Int -> b -> ([a], b)) -> (a -> b -> Bool) -> [a] -> b -> ([a], Int, b)
---
---     dfsMem :: (a -> Int -> b -> ([a], b)) -> (a -> b -> Bool) -> [a] -> b -> (Maybe (a, Int), b)
---
-        dfsf0' jm cost b bs ll = map (\n' -> (applyBtn n' jm b,cost+n',bs)) 
-
-        dfsf0 (jm,cost,[]) _ (mem,ll) = ([],mem') 
-            where
-                mem' 
-                    | dfsf1 jm =  min mem cost
-                    | otherwise = mem
-
-        dfsf0 (jm,cost,[(b,_)]) _ (mem,ll)
-            | cost > mem = ([],mem)
-            | otherwise = (step0,(mem',ll0))
-            where
-                n = greedyN b jm
-
-                pass = dfsf1 jm
-                mem' 
-                    | pass =  min mem cost
-                    | otherwise = mem
-                (step0, ll0) =dfsf0' jm cost b [] [n] ll
-
-        dfsf0 (jm,cost,bp:bp':bs) _ (mem,ll)
-            | cost > mem = ([],(mem,ll)) 
-            | bw == bw' =  (step1, (mem',ll1)) -- reverse not needed?
-            | n >=m  = (step0, (mem',ll0)) -- Last vector for this head is constrained, and can match the constraint
-            | otherwise =  ([], (mem,ll)) -- Last vector for this head is constrained, but constraint not satisfiable
-            where
-                (b,bw) = bp
-                (b',bw') = bp'
-                n = greedyN b jm
-                m = jm Map.! bw -- Number of presses required by active constraint
-                pass = dfsf1 jm
-                mem' 
-                    | pass =  min cost mem
-                    | otherwise = mem
-                (step0,ll0) =dfsf0' jm cost b (bp':bs) [m] ll
-                (step1,ll1) =(dfsf0' jm cost b (bp':bs) $ reverse [0..n] ll
-        dfsf1 jm
-            | any (<0) jm = traceShow jm $ error "err 0"
-            | otherwise = all (== 0) jm
-
-        doDfs plr = traceShow ("TS2",btns' plr) $ dfsMem dfsf0 (\ _ _ -> False) [(jToM $ jltg plr, 0, btns' plr)] 999999999
-
-        doDfs' plr = traceShow ("TS3",y) y
-            where 
-                y = doDfs plr
-    in
-        Just $ sum $  map (snd . doDfs') plrs
--}
 
 solve2 :: [ParseLineResult] -> Maybe Int
 solve2 plrs = -- @@
     let 
         
-        mapWithIndex f xs = reverse $ fst $ foldl (\(acc,i) x -> (f i x : acc , i+1)) ([],0)  xs
+        mapWithIndex f xs = reverse $ fst $ foldl' (\(acc,i) x -> (f i x : acc , i+1)) ([],0)  xs
 
         jToM js = Map.fromList $ mapWithIndex (,) js -- Go from tgt to 0
 
-        applyBtn n jm b =  foldl (flip (Map.update (\x -> Just (x-n) ))) jm b
-        applyBtn1 jm b =  foldl (flip (Map.update (\x -> Just (x-1) ))) jm b
+        applyBtn n jm b =  foldl' (flip (Map.update (\x -> Just (x-n) ))) jm b
+        applyBtn1 jm b =  foldl' (flip (Map.update (\x -> Just (x-1) ))) jm b
+
+        -- cmemoChoice = toMemoized2 (binomialC :: (Integer -> Integer -> Integer)) 
 
 --        lazyLookup f k mp
 --            | isJust y = (y, mp)
@@ -248,18 +157,16 @@ solve2 plrs = -- @@
 
         -- Get dimensions from most constrained to least
 
-        -- [[Int]] -> [(Int,Int)]   (indx, btn dof)
-        grps bs = map (\xss -> (head xss,length xss)) $ group $ sort $ concat $ bs
-        
-        choose m n
-            | n < 1 = 1
-            | otherwise = (m `div` n) * choose (m-1) (n-1)
+        -- [[Int]] -> [(Int,Int)]   --(indx, btn dof)
+        grps bs = map (\xss -> (head xss,length xss)) $ group $ sort $ concat bs
 
-        costs jm bs = sortOn (\(_,x,y) -> choose (x+y-1) (y-1)) $ map (\(idx,dof) -> (idx,  (fromMaybe 0 $ jm Map.!? idx), dof)) $ grps bs
+        costs0 jm idx dof = (idx,  fromMaybe 0 (jm Map.!? idx), dof)
+        
+        costs jm bs = sortOn (\(_,x,y) -> binomialC (x+y-1) (y-1)) $ map ( uncurry (costs0 jm) ) $ grps bs
 
         splitMatchesWith f g xs = (map g $ filter f xs, filter (not . f) xs)
 
-       -- btns'' plr = traceShow ("TS1",grpsM plr) $ fst $ foldl (\(acc,bs) (idx,k) -> first (acc++) $ splitMatchesWith (elem k) (,idx,k) bs) ([] ,btns plr) $ grpsM plr -- map (\b -> (b,minimum $ map (grpsM plr Map.!) b)) $ btns plr
+       -- btns'' plr = traceShow ("TS1",grpsM plr) $ fst $ foldl' (\(acc,bs) (idx,k) -> first (acc++) $ splitMatchesWith (elem k) (,idx,k) bs) ([] ,btns plr) $ grpsM plr -- map (\b -> (b,minimum $ map (grpsM plr Map.!) b)) $ btns plr
 
      --   btns' plr = map (\(b,_,k) -> (b,k)) $ sortOn snd3 $ btns'' plr
 
@@ -324,6 +231,7 @@ solveDebug plr = do
     return ()
 --------------------------------------------------------------------------------------------
 -- Business
+-- TODO: Memoized and Mapfold separate files. ILP library with the day 10 approach? dfs with ancestry?
 
 
 
