@@ -143,26 +143,21 @@ solve2 plrs = -- @@
 
         jToM js = Map.fromList $ mapWithIndex (,) js -- Go from tgt to 0
 
-        applyBtn n jm b =  foldl' (flip (Map.update (\x -> Just (x-n) ))) jm b
-        applyBtn1 jm b =  foldl' (flip (Map.update (\x -> Just (x-1) ))) jm b
+        applyBtn n  =  foldl' (flip (Map.update (\x -> Just (x-n) )))
+        applyBtn1 =  foldl' (flip (Map.update (\x -> Just (x-1) )))
 
-        -- cmemoChoice = toMemoized2 (binomialC :: (Integer -> Integer -> Integer)) 
-
---        lazyLookup f k mp
---            | isJust y = (y, mp)
---            | otherwise = (z, Map.insert k z mp)
---            where 
---                y = mp Map.!? k
---                z = f k
+        memoChoice' = toMemoized2 (binomialC :: (Int -> Int -> Int)) 
+        memoChoice = facBranchIn memoChoice' (\(x,y,z) -> ((y,z),(x,y,z))) :: GenFactory (Memoized2 Int Int Int) (Int,Int,Int) (Memoized2 Int Int Int, Int)
 
         -- Get dimensions from most constrained to least
 
         -- [[Int]] -> [(Int,Int)]   --(indx, btn dof)
         grps bs = map (\xss -> (head xss,length xss)) $ group $ sort $ concat bs
 
-        costs0 jm idx dof = (idx,  fromMaybe 0 (jm Map.!? idx), dof)
-        
-        costs jm bs = sortOn (\(_,x,y) -> binomialC (x+y-1) (y-1)) $ map ( uncurry (costs0 jm) ) $ grps bs
+        costs0 jm bs =  map (\(idx,dof) -> (idx,  fromMaybe 0 (jm Map.!? idx), dof)) $ grps bs         
+
+        -- Sort costs using momo-ized choice function
+        costs jm bs mc = second (sortOn fst) $ mapFactoryr mc $ costs0 jm bs
 
         splitMatchesWith f g xs = (map g $ filter f xs, filter (not . f) xs)
 
@@ -184,46 +179,55 @@ solve2 plrs = -- @@
         
         isSoln = all (==0)
 
-        -- Map Int Int -> Int -> [[Int]] -> ??* -> Int  *Whatever bestSearch needs
-        recu jm k [] css 
-            | isSoln jm = 0
-            | fromMaybe 1 (jm Map.!? k) /= 0 = 99999999
-            | cs' == [] = 9999999999
-            | otherwise = {-traceShow ("next Key",k',jm,cs',css') $-} recu jm k' cs' css'
+        minOn f x y
+            | y' < x' = y
+            | otherwise = x
             where 
-                (k', cs' , css') =  bestSearch jm css
+                x' = f x
+                y' = f y
 
-        recu jm k [b] css = {-trace "P1" $-} n + recu jm' k [] css -- Constrained choice, take greedily, see if it's enough
+        -- Map Int Int -> Int -> [[Int]] -> ??* -> Int  *Whatever bestSearch needs
+        recu jm k [] css mc
+            | isSoln jm = (0,mc)
+            | fromMaybe 1 (jm Map.!? k) /= 0 = (99999999,mc)
+            | cs' == [] = (9999999999,mc)
+            | otherwise = {-traceShow ("next Key",k',jm,cs',css') $-} recu jm k' cs' css' mc'
+            where 
+                (k', cs' , css', mc') =  bestSearch jm css mc
+
+        recu jm k [b] css mc = {-trace "P1" $-} (n + res0,mc') -- Constrained choice, take greedily, see if it's enough
             where 
                 jm' = applyBtn n jm b
                 n = greedyN b jm
+                (res0,mc') = recu jm' k [] css mc
 
-        recu jm k (b:bs) css 
-            | any(<0) jm = 9999999999
-            |otherwise = {- trace "P2" $-} min (recu jm k bs css) (1 + recu jm' k (b:bs) css)
+        recu jm k (b:bs) css mc
+            | any(<0) jm = (9999999999,mc)
+            |otherwise = {- trace "P2" $-} minOn fst (res0 ,mc') (first (+1) $ recu jm' k (b:bs) css mc') -- Try changing order here?
             where 
+                (res0,mc') = recu jm k bs css mc
                 jm' = applyBtn1 jm b
 
         
         -- css =  [btns]
-        bestSearch jm [] = (0,[],[])
-        bestSearch jm [b] = (head b,[b],[])
+        bestSearch jm [] mc = (0,[],[],mc)
+        bestSearch jm [b] mc = (head b,[b],[],mc)
 
-        bestSearch jm bs = {-traceShow (k,bs',cs) $-} (k,bs',cs)
+        bestSearch jm bs mc = {-traceShow (k,bs',cs) $-} (k,bs',cs,mc')
             where
-                csts = costs jm bs
-                k = {-traceShow csts $-} fst3 $ head $ csts
+                (mc',csts) = costs jm bs mc
+                k = {-traceShow csts $-} fst3 $ snd $ head csts
                 (bs',cs) = splitMatchesWith (elem k) id bs
 
         
-        doSrch plr = traceShow plr $ recu jm k bs' cs
+        doSrch mc plr = traceShow plr $ swap $ recu jm k bs' cs mc'
             where
                 jm = jToM $ jltg plr
                 bs = btns plr
-                (k,bs', cs ) = bestSearch jm bs
+                (k,bs', cs, mc' ) = bestSearch jm bs mc
 
     in
-        Just $ sum $  map doSrch plrs
+        Just $ sum $ snd $  mapFactoryr (GenFactory doSrch memoChoice) plrs
 
 
 solveDebug :: [ParseLineResult] ->  IO()

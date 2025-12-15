@@ -19,10 +19,12 @@ module Memoize
         ,Factory
         ,facRun
         ,mapFactoryr
-        ,GenFactory()
+        ,GenFactory(GenFactory)
         --,facComp
         ,facCompIn
         ,facCompOut
+        ,facBranchIn
+        ,facBranchOut
     )
 where
 
@@ -35,7 +37,6 @@ import MapFoldable
 
 class Factory s a b where
     facRun :: s -> a -> (s,b)
-
 
 mapFactoryr :: (MapFoldable t b, Factory sfl a b) => sfl -> t a -> (sfl, t b) 
 mapFactoryr m fs = 
@@ -143,11 +144,30 @@ facCompIn f g =
     in
         GenFactory newF f
 
+facBranchIn :: (Factory s b c) => s -> (a -> (b,d)) -> GenFactory s a (c,d) 
+facBranchIn f g =
+    let
+        newF f0 x = (f0', (z,byp))
+            where
+                (y,byp) = g x
+                (f0',z)  = facRun f0 y
+    in
+        GenFactory newF f
+
 
 facCompOut :: (Factory s a b) => (b -> c) -> s -> GenFactory s a c 
 facCompOut f g =
     let
         newF g0 x = (g0', f y)
+            where
+                (g0',y)  = facRun g0 x
+    in
+        GenFactory newF g
+
+facBranchOut :: (Factory s a b) => (b -> c -> d) -> s -> GenFactory s (a,c) d 
+facBranchOut f g =
+    let
+        newF g0 (x,byp) = (g0', f y byp)
             where
                 (g0',y)  = facRun g0 x
     in
