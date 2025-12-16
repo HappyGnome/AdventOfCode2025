@@ -130,3 +130,7 @@ instance (Ord c) => MapFoldable Set.Set c where
 
 -- TODO: See definition of foldl' <- use this for lists preferred
 -- Also see defn of foldl'. May be able to use this approach to create a mapFoldl
+--
+--
+--
+
