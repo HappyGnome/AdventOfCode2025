@@ -67,8 +67,8 @@ executable AdventOfCode2025
                     --,Test_PuzzleAlgorithm
                     ,Norms
                     ,ArithEx
-                    ,Memoize
-                    ,MapFoldable
+                    --,Memoize
+                    --,MapFoldable
                     ,A2510
                 --^^Current^^
 

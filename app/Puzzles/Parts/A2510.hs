@@ -36,7 +36,7 @@ import PuzzleAlgorithm
 import Shorts
 import Norms
 import ArithEx
-import Memoize
+--import Memoize
 
 
 problemNumber :: String
@@ -70,8 +70,8 @@ exec1 inpPathBase inpPath0 inpPath1 = do
 exec2 :: String -> String -> String -> IO()
 exec2 inpPathBase inpPath0 inpPath1 = do
     let 
-        --inpPath2 = inpPathBase ++ "Test2.txt"
- {-@@-}inpPath = inpPath1         -- Choose Test or Input here 
+       inpPath2 = inpPathBase ++ "Test2.txt"
+ {-@@-}inpPath = inpPath2         -- Choose Test or Input here 
 
     readParseSolve' (problemNumber ++ " / Part 2") inpPath parseLines solve2
     --18960
@@ -122,7 +122,7 @@ solve1 plrs = -- @@
         lToM l = Map.fromList $ mapWithIndex (\i b -> (i,not b)) l -- Go from not lgts to all true instead
 
 
-        applyBtn = foldl (\acc i -> Map.update (Just . not) i  acc) 
+        applyBtn = foldl (flip (Map.update (Just . not))) 
 
         bfsf0 bs lm _ mem 
             | Set.member lm mem = ([],mem)
@@ -143,11 +143,32 @@ solve2 plrs = -- @@
 
         jToM js = Map.fromList $ mapWithIndex (,) js -- Go from tgt to 0
 
-        applyBtn n  =  foldl' (flip (Map.update (\x -> Just (x-n) )))
+        applyBtn n =  foldl' (flip (Map.update (\x -> Just (x-n) ))) 
         applyBtn1 =  foldl' (flip (Map.update (\x -> Just (x-1) )))
 
-        memoChoice' = toMemoized2 (binomialC :: (Int -> Int -> Int)) 
-        memoChoice = facBranchIn memoChoice' (\(x,y,z) -> ((y,z),(x,y,z))) :: GenFactory (Memoized2 Int Int Int) (Int,Int,Int) (Memoized2 Int Int Int, Int)
+--        memoBinom x y mp
+--            | Just z <- mp Map.!? (x,y) = (z ,mp)
+--            | otherwise = (z',mp')
+--            where
+--                z' = binomialC x y
+--                mp' = Map.insert (x,y) z' mp
+
+--        memoBinom x y mp
+--            | y <= 0 = (1,mp)
+--            | Just z <- mp Map.!? (x,y) = (z ,mp)
+--            | otherwise = (z',mp')
+--            where
+--                z' = (x `div` y) * fst (memoBinom (x-1) (y-1) mp)
+--                mp' = Map.insert (x,y) z' mp
+
+
+        memoBinom x y mp =  (binomialC x y, mp) -- Dummy memoization to compare
+
+        mapBinom' (acc,mp) (x,y,z) = ((x,w) : acc, mp')
+            where
+                (w,mp') = memoBinom (y+z-1) (z-1) mp
+
+        mapBinom mp = foldl' mapBinom' ([],mp) 
 
         -- Get dimensions from most constrained to least
 
@@ -156,8 +177,8 @@ solve2 plrs = -- @@
 
         costs0 jm bs =  map (\(idx,dof) -> (idx,  fromMaybe 0 (jm Map.!? idx), dof)) $ grps bs         
 
-        -- Sort costs using momo-ized choice function
-        costs jm bs mc = second (sortOn fst) $ mapFactoryr mc $ costs0 jm bs
+        -- Sort costs using memo-ized choice function
+        costs jm bs mc =  first (sortOn fst) $ mapBinom mc $ costs0 jm bs
 
         splitMatchesWith f g xs = (map g $ filter f xs, filter (not . f) xs)
 
@@ -179,18 +200,11 @@ solve2 plrs = -- @@
         
         isSoln = all (==0)
 
-        minOn f x y
-            | y' < x' = y
-            | otherwise = x
-            where 
-                x' = f x
-                y' = f y
-
-        -- Map Int Int -> Int -> [[Int]] -> ??* -> Int  *Whatever bestSearch needs
+        -- Map Int Int -> Int -> [[Int]] -> <Some memo structure> -> Int 
         recu jm k [] css mc
             | isSoln jm = (0,mc)
-            | fromMaybe 1 (jm Map.!? k) /= 0 = (99999999,mc)
-            | cs' == [] = (9999999999,mc)
+            | fromMaybe 1 (jm Map.!? k) /= 0 = (99999999991,mc)
+            | null cs' = (9999999992,mc)
             | otherwise = {-traceShow ("next Key",k',jm,cs',css') $-} recu jm k' cs' css' mc'
             where 
                 (k', cs' , css', mc') =  bestSearch jm css mc
@@ -202,10 +216,11 @@ solve2 plrs = -- @@
                 (res0,mc') = recu jm' k [] css mc
 
         recu jm k (b:bs) css mc
-            | any(<0) jm = (9999999999,mc)
-            |otherwise = {- trace "P2" $-} minOn fst (res0 ,mc') (first (+1) $ recu jm' k (b:bs) css mc') -- Try changing order here?
+            | any(<0) jm = (9999999993,mc)
+            |otherwise =  {-trace "P2" $-} (min res0 res1, mc'')
             where 
                 (res0,mc') = recu jm k bs css mc
+                (res1, mc'') = first (+1) $ recu jm' k (b:bs) css mc'
                 jm' = applyBtn1 jm b
 
         
@@ -213,21 +228,24 @@ solve2 plrs = -- @@
         bestSearch jm [] mc = (0,[],[],mc)
         bestSearch jm [b] mc = (head b,[b],[],mc)
 
-        bestSearch jm bs mc = {-traceShow (k,bs',cs) $-} (k,bs',cs,mc')
+        bestSearch jm bs mc = (k,bs',cs,mc')
             where
-                (mc',csts) = costs jm bs mc
-                k = {-traceShow csts $-} fst3 $ snd $ head csts
+                (csts, mc') = costs jm bs mc
+                k =  fst $ head csts
                 (bs',cs) = splitMatchesWith (elem k) id bs
 
         
-        doSrch mc plr = traceShow plr $ swap $ recu jm k bs' cs mc'
+        doSrch mc plr = traceShow (plr,ans) (mc'', ans)
             where
                 jm = jToM $ jltg plr
                 bs = btns plr
                 (k,bs', cs, mc' ) = bestSearch jm bs mc
+                (ans,mc'') = recu jm k bs' cs mc'
+
+        mapSrch = foldl' (\(mp,acc) x -> second (:acc) $ doSrch mp x ) (Map.empty,[])
 
     in
-        Just $ sum $ snd $  mapFactoryr (GenFactory doSrch memoChoice) plrs
+        Just $ sum $ snd $ mapSrch plrs
 
 
 solveDebug :: [ParseLineResult] ->  IO()
