@@ -309,5 +309,5 @@ dfsMem gen pass seed mem0 =
         | otherwise = step stk' (lvl + 1) mem'
         where
           (chlds, mem') = gen x lvl mem
-          stk' = chlds : xs : stk
+          stk' = chlds `seq` chlds : xs : stk
    in step [seed] 0 mem0

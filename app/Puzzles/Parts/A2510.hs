@@ -71,7 +71,7 @@ exec2 :: String -> String -> String -> IO()
 exec2 inpPathBase inpPath0 inpPath1 = do
     let 
        inpPath2 = inpPathBase ++ "Test2.txt"
- {-@@-}inpPath = inpPath2         -- Choose Test or Input here 
+ {-@@-}inpPath = inpPath1         -- Choose Test or Input here 
 
     readParseSolve' (problemNumber ++ " / Part 2") inpPath parseLines solve2
     --18960
@@ -144,14 +144,14 @@ solve2 plrs = -- @@
         jToM js = Map.fromList $ mapWithIndex (,) js -- Go from tgt to 0
 
         applyBtn n =  foldl' (flip (Map.update (\x -> Just (x-n) ))) 
-        applyBtn1 =  foldl' (flip (Map.update (\x -> Just (x-1) )))
+        --applyBtn1  =  foldl' (flip (Map.update (\x -> Just (x-1) )))
 
---        memoBinom x y mp
---            | Just z <- mp Map.!? (x,y) = (z ,mp)
---            | otherwise = (z',mp')
---            where
---                z' = binomialC x y
---                mp' = Map.insert (x,y) z' mp
+        memoBinom x y mp
+            | Just z <- mp Map.!? (x,y) = (z ,mp)
+            | otherwise = (z',mp')
+            where
+                z' = binomialC x y
+                mp' = Map.insert (x,y) z' mp
 
 --        memoBinom x y mp
 --            | y <= 0 = (1,mp)
@@ -162,7 +162,7 @@ solve2 plrs = -- @@
 --                mp' = Map.insert (x,y) z' mp
 
 
-        memoBinom x y mp =  (binomialC x y, mp) -- Dummy memoization to compare
+   --     memoBinom x y mp =  (binomialC x y, mp) -- Dummy memoization to compare
 
         mapBinom' (acc,mp) (x,y,z) = ((x,w) : acc, mp')
             where
@@ -200,50 +200,61 @@ solve2 plrs = -- @@
         
         isSoln = all (==0)
 
-        -- Map Int Int -> Int -> [[Int]] -> <Some memo structure> -> Int 
-        recu jm k [] css mc
-            | isSoln jm = (0,mc)
-            | fromMaybe 1 (jm Map.!? k) /= 0 = (99999999991,mc)
-            | null cs' = (9999999992,mc)
-            | otherwise = {-traceShow ("next Key",k',jm,cs',css') $-} recu jm k' cs' css' mc'
+--dfsMem :: (a -> Int -> b -> ([a], b)) -> (a -> b -> Bool) -> [a] -> b -> (Maybe (a, Int), b)
+        
+        dfsf0 (jm,k, [],css, csta) _ (cstm,mc)
+            | isSoln jm = ([],(min csta cstm,mc))
+            | fromMaybe 1 (jm Map.!? k) /= 0 = ([],(cstm,mc))
+            | null cs' = ([], (cstm,mc))
+            | otherwise = ([(jm,k',cs',css', csta)],(cstm,mc))
+            --{-traceShow ("next Key",k',jm,cs',css') $-} recu jm k' cs' css' mc'
             where 
                 (k', cs' , css', mc') =  bestSearch jm css mc
 
-        recu jm k [b] css mc = {-trace "P1" $-} (n + res0,mc') -- Constrained choice, take greedily, see if it's enough
+        dfsf0 (jm,k, [b],css, csta) _ mc = ([(jm', k, [], css, n + csta)],mc) -- Constrained choice, take greedily, see if it's enough
             where 
                 jm' = applyBtn n jm b
                 n = greedyN b jm
-                (res0,mc') = recu jm' k [] css mc
 
-        recu jm k (b:bs) css mc
-            | any(<0) jm = (9999999993,mc)
-            |otherwise =  {-trace "P2" $-} (min res0 res1, mc'')
+        dfsf0 (jm,k, b:bs,css, csta) _ (cstm, mc)
+            | cstm < csta = ([],(cstm,mc))
+            | any(<0) jm = ([],(cstm,mc))
+            | otherwise =  {-trace "P2" $-} (childs, (cstm, mc))
             where 
-                (res0,mc') = recu jm k bs css mc
-                (res1, mc'') = first (+1) $ recu jm' k (b:bs) css mc'
-                jm' = applyBtn1 jm b
+                jm' m = applyBtn m jm b
+                n = greedyN b jm
+                childs = map (\m' -> (jm' m',k,bs,css,m'+csta)) [0..n]
 
-        
+
+
+        dfsf1 _ _ = False
+ 
         -- css =  [btns]
         bestSearch jm [] mc = (0,[],[],mc)
         bestSearch jm [b] mc = (head b,[b],[],mc)
 
-        bestSearch jm bs mc = (k,bs',cs,mc')
+        bestSearch jm bs mc = (k,sortOn length bs',cs,mc') -- put the largest button last (the last in the set is explored greedily first)
             where
                 (csts, mc') = costs jm bs mc
                 k =  fst $ head csts
                 (bs',cs) = splitMatchesWith (elem k) id bs
 
         
+--        doSrch mc plr = traceShow (plr,ans) (mc'', ans)
+--            where
+--                jm = jToM $ jltg plr
+--                bs = btns plr
+--                (k,bs', cs, mc' ) = bestSearch jm bs mc
+--                (ans,mc'') = recu jm k bs' cs mc'
+--
         doSrch mc plr = traceShow (plr,ans) (mc'', ans)
             where
                 jm = jToM $ jltg plr
                 bs = btns plr
                 (k,bs', cs, mc' ) = bestSearch jm bs mc
-                (ans,mc'') = recu jm k bs' cs mc'
+                (_,(ans,mc'')) =  dfsMem dfsf0 dfsf1 [(jm, k, bs', cs,0)] (999999999999,mc')
 
         mapSrch = foldl' (\(mp,acc) x -> second (:acc) $ doSrch mp x ) (Map.empty,[])
-
     in
         Just $ sum $ snd $ mapSrch plrs
 
