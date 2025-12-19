@@ -24,6 +24,8 @@ module PuzzleAlgorithm
     dfsMem,
     bfsTree,
     bfsMem,
+    aStarMultSrc,
+    aStar
   )
 where
 
@@ -43,7 +45,7 @@ import Shorts
 
 ----------------------------------------------------------------------------------------------
 -- Dijkstra
-data (Ord a) => DijState a b = DijState {vstd :: Map.Map a b, actv :: SList.SortedList (b, a)}
+data (Ord a) => DijState a b = DijState {dijVstd :: Map.Map a b, dijActv :: SList.SortedList (b, a)}
 
 -- | dijkstra ng sts nd
 -- ng v wt = list of neighbours of v and their weights
@@ -52,24 +54,24 @@ data (Ord a) => DijState a b = DijState {vstd :: Map.Map a b, actv :: SList.Sort
 -- returns: map of visited vertices and their weights
 dijkstraMultSrc :: (Ord a, Ord b) => (a -> b -> [(a, b)]) -> [(a, b)] -> ((a, b) -> Bool) -> Map.Map a b
 dijkstraMultSrc ng sts nd =
-  let addVisited x wt ds = ds {vstd = Map.insert x wt $ vstd ds}
+  let addVisited x wt ds = ds {dijVstd = Map.insert x wt $ dijVstd ds}
 
       candidateActv x wt = SList.toSortedList $ map swap $ ng x wt
 
-      updateActv tl x wt ds = ds {actv = SList.union tl $ candidateActv x wt}
+      updateActv tl x wt ds = ds {dijActv = SList.union tl $ candidateActv x wt}
 
       -- tryBestActv :: (Ord a, Ord b) => a -> b -> SList.SortedList (b,a) -> DijState a b -> DijState a b
       tryBestActv x wt tl ds
         | nd (x, wt) = addVisited x wt ds
-        | isJust (vstd ds Map.!? x) = dijDo ds {actv = tl}
+        | isJust (dijVstd ds Map.!? x) = dijDo ds {dijActv = tl}
         | otherwise = dijDo $ updateActv tl x wt $ addVisited x wt ds
 
       -- dijDo :: (Ord a, Ord b) => ((a,b) -> [(a,b)]) -> ((a,b) -> Bool) -> DijState a b -> DijState a b
       dijDo ds =
-        case SList.uncons $ actv ds of
+        case SList.uncons $ dijActv ds of
           Nothing -> ds
           Just ((wt, x), tl) -> tryBestActv x wt tl ds
-   in vstd $ dijDo DijState {vstd = Map.empty, actv = SList.toSortedList $ map swap sts}
+   in dijVstd $ dijDo DijState {dijVstd = Map.empty, dijActv = SList.toSortedList $ map swap sts}
 
 -- | dijkstra ng st nd
 -- ng v wt = list of neighbours of v and their weights
@@ -78,7 +80,64 @@ dijkstraMultSrc ng sts nd =
 -- returns: map of visited vertices and their weights
 dijkstra :: (Ord a, Ord b) => (a -> b -> [(a, b)]) -> (a, b) -> ((a, b) -> Bool) -> Map.Map a b
 dijkstra ng st = dijkstraMultSrc ng [st]
+--
+----------------------------------------------------------------------------------------------
+-- A*
 
+data (Ord a) => AStarState a b = AStarState {astarVstd :: Map.Map a b, astarActv :: SList.SortedList (b, b, a), astarHeurMem :: Map.Map a b}
+
+-- | aStarMultSrc ng heur sts nd
+-- ng v wt = list of neighbours of v and their weights
+-- heur x = a cost estimate from x to a solution vertex. It should be an admissable heuristic, i.e. a lower bound on distance from x to a solution
+-- sts = [(starting vertex, initial weight)] -- Multiple sources can be defined
+-- nd = check a (vertex, weight) pair and return True if algorithm should end
+-- returns: map of visited vertices and their weights
+aStarMultSrc :: (Ord a, Ord b,  Num b) => (a -> b -> [(a, b)]) -> (a -> b) -> [(a, b)] -> ((a, b) -> Bool) -> Map.Map a b
+aStarMultSrc ng heur sts nd =
+  let 
+      addVisited x dst ass = ass {astarVstd = Map.insert x dst $ astarVstd ass}
+
+      caBuild0 (acc,mem) = first (:acc) . addHeur mem
+      caBuild mem = foldl' caBuild0 ([],mem)
+
+      candidateActv x dst ass = first SList.toSortedList $ caBuild (astarHeurMem ass) $ ng x dst
+
+      updateActv tl x _ dst ass = ass {astarActv = SList.union tl ca, astarHeurMem = mem'}
+        where
+            (ca,mem') = candidateActv x dst ass
+
+      tryBestActv x wt dst tl ass
+        | nd (x, dst) = newVstd
+        | Map.member x $ astarVstd ass = astarDo ass {astarActv = tl}
+        | otherwise = astarDo $ updateActv tl x wt dst newVstd
+        where
+            newVstd = addVisited x dst ass
+
+      addHeur mem (x,y)
+        | Just h <- m = ((y + h,y,x),mem)
+        | otherwise = ((y + h', y, x),mem')
+        where 
+            m = mem Map.!? x
+            h' = heur x
+            mem' = Map.insert x h' mem
+
+      astarDo ass =
+        case SList.uncons $ astarActv ass of
+          Nothing -> ass
+          Just ((wt, dst, x), tl) -> tryBestActv x wt dst tl ass
+
+      (actv0,mem0) = first SList.toSortedList $ caBuild Map.empty sts
+   in 
+      astarVstd $ astarDo AStarState {astarVstd = Map.empty, astarActv = actv0, astarHeurMem = mem0}
+
+-- | aStar ng heur st nd
+-- ng v wt = list of neighbours of v and their weights
+-- heur x = a cost estimate from x to a solution vertex. It should be an admissable heuristic, i.e. a lower bound on distance from x to a solution
+-- st = (starting vertex, initial weight)
+-- nd = check a (vertex, weight) pair and return True if algorithm should end
+-- returns: map of visited vertices and their weights
+aStar :: (Ord a, Ord b, Num b) => (a -> b -> [(a, b)]) -> (a -> b) -> (a, b) -> ((a, b) -> Bool) -> Map.Map a b
+aStar ng heur st = aStarMultSrc ng heur [st]
 ----------------------------------------------------------------------------------------------
 -- Floyd-Warshall
 

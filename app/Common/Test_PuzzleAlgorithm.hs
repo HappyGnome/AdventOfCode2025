@@ -358,3 +358,174 @@ floydWarshall2 =
         err = show map1
     in
         ("floydWarshall2", pass, err)
+--
+------------------------------------------------------------------------------------------
+-- dijkstra
+
+dijkstraTest :: IO()
+dijkstraTest = 
+    let
+        res = foldl (flip (:)) [] [dijkstra0,dijkstra1, dijkstra2]
+
+    in
+        printf $ unlines $ map (\(a,b,c) -> a ++ ": " ++ resultDetails b c) res
+
+dijkstra0 :: (String,Bool,String)
+dijkstra0 =
+    let
+        seed = [(1,0)]
+
+        edglkp = Map.fromList [(1,[(3,1),(4,3)]),(3,[(4,1)]),(4,[(1,1)]),(5,[(6,2)]),(7,[(8,2)]),(9,[(10,2)])]
+        
+        f x w = map (second (+w)) $ fromMaybe [] $ edglkp Map.!? x
+        g (x,w) = x == 10
+    
+        map1 = dijkstraMultSrc f seed g
+
+        pass = sort (Map.toList map1)  == ([(1,0),(3,1),(4,2)] ::[(Int,Int)])
+
+        err = show map1
+    in
+        ("dijkstra0", pass, err)
+
+dijkstra1 :: (String,Bool,String)
+dijkstra1 =
+    let
+        seed = [(1,0)]
+
+        edglkp = Map.fromList [(1,[(3,1),(4,3)]),(3,[(4,1)]),(4,[(5,1)]),(5,[(7,2)]),(7,[(8,2)]),(9,[(10,2)])]
+        
+        f x w = map (second (+w)) $ fromMaybe [] $ edglkp Map.!? x
+        g (x,w) = x == 8
+    
+        map1 = dijkstraMultSrc f seed g
+
+        pass = sort (Map.toList map1)  == ([(1,0),(3,1),(4,2),(5,3),(7,5),(8,7)] ::[(Int,Int)])
+
+        err = show map1
+    in
+        ("dijkstra1", pass, err)
+
+dijkstra2 :: (String,Bool,String)
+dijkstra2 =
+    let
+        seed = [(1,0)]
+
+        edglkp = Map.fromList [(1,[(3,1),(4,3)]),(3,[(4,1)]),(4,[(5,1)]),(5,[(7,2)]),(7,[(8,2)]),(9,[(10,2)])]
+        
+        f x w = map (second (+w)) $ fromMaybe [] $ edglkp Map.!? x
+        g (x,w) = x == 7
+    
+        map1 = dijkstraMultSrc f seed g
+
+        pass = sort (Map.toList map1)  == ([(1,0),(3,1),(4,2),(5,3),(7,5)] ::[(Int,Int)])
+
+        err = show map1
+    in
+        ("dijkstra1", pass, err)
+
+--
+------------------------------------------------------------------------------------------
+-- aStar
+
+aStarTest :: IO()
+aStarTest = 
+    let
+        res = foldl (flip (:)) [] [aStar0,aStar1, aStar2, aStar3,aStar3']
+
+    in
+        printf $ unlines $ map (\(a,b,c) -> a ++ ": " ++ resultDetails b c) res
+
+aStar0 :: (String,Bool,String)
+aStar0 =
+    let
+        seed = [(1,0)]
+
+        edglkp = Map.fromList [(1,[(3,1),(4,3)]),(3,[(4,1)]),(4,[(1,1)]),(5,[(6,2)]),(7,[(8,2)]),(9,[(10,2)])]
+        
+        f x w = map (second (+w)) $ fromMaybe [] $ edglkp Map.!? x
+        g (x,w) = x == 10
+    
+        map1 = aStarMultSrc f (const 0) seed g
+
+        pass = sort (Map.toList map1)  == ([(1,0),(3,1),(4,2)] ::[(Int,Int)])
+
+        err = show map1
+    in
+        ("aStar0", pass, err)
+
+aStar1 :: (String,Bool,String)
+aStar1 =
+    let
+        seed = [(1,0)]
+
+        edglkp = Map.fromList [(1,[(3,1),(4,3)]),(3,[(4,1)]),(4,[(5,1)]),(5,[(7,2)]),(7,[(8,2)]),(9,[(10,2)])]
+        
+        f x w = map (second (+w)) $ fromMaybe [] $ edglkp Map.!? x
+        g (x,w) = x == 8
+    
+        map1 = aStarMultSrc f (const 0) seed g
+
+        pass = sort (Map.toList map1)  == ([(1,0),(3,1),(4,2),(5,3),(7,5),(8,7)] ::[(Int,Int)])
+
+        err = show map1
+    in
+        ("aStar1", pass, err)
+
+aStar2 :: (String,Bool,String)
+aStar2 =
+    let
+        seed = [(1,0)]
+
+        edglkp = Map.fromList [(1,[(3,1),(4,3)]),(3,[(4,1)]),(4,[(5,1)]),(5,[(7,2)]),(7,[(8,2)]),(9,[(10,2)])]
+        
+        f x w = map (second (+w)) $ fromMaybe [] $ edglkp Map.!? x
+        g (x,w) = x == 7
+    
+        map1 = aStarMultSrc f (const 0) seed g
+
+        pass = sort (Map.toList map1)  == ([(1,0),(3,1),(4,2),(5,3),(7,5)] ::[(Int,Int)])
+
+        err = show map1
+    in
+        ("aStar2", pass, err)
+
+aStar3 :: (String,Bool,String)
+aStar3 =
+    let
+        seed = [(1,0)]
+
+        edglkp = Map.fromList [(1,[(3,100),(4,20)]),(4,[(5,20)]),(5,[(6,20)]),(6,[(7,20)]),(7,[(8,20)]),(8,[(9,20)])]
+        
+        f x w = map (second (+w)) $ fromMaybe [] $ edglkp Map.!? x
+        g (x,w) = x == 3
+
+        map1 = aStarMultSrc f (const 0) seed g
+
+        pass = sort (Map.toList map1)  == ([(1,0),(3,100),(4,20),(5,40),(6,60),(7,80)] ::[(Int,Int)])
+
+        err = show map1
+    in
+        ("aStar3", pass, err)
+
+aStar3' :: (String,Bool,String)
+aStar3' =
+    let
+        seed = [(1,0)]
+
+        edglkp = Map.fromList [(1,[(3,100),(4,20)]),(4,[(5,20)]),(5,[(6,20)]),(6,[(7,20)]),(7,[(8,20)]),(8,[(9,20)])]
+        
+        f x w = map (second (+w)) $ fromMaybe [] $ edglkp Map.!? x
+        g (x,w) = x == 3
+        
+        h x
+            | x == 3 = 0
+            | otherwise = 100
+
+        map1 = aStarMultSrc f h seed g
+
+        pass = sort (Map.toList map1)  == ([(1,0),(3,100)] ::[(Int,Int)])
+
+        err = show map1
+    in
+        ("aStar3'", pass, err)
