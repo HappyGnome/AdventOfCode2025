@@ -144,31 +144,7 @@ solve2 plrs = -- @@
         jToM js = Map.fromList $ mapWithIndex (,) js -- Go from tgt to 0
 
         applyBtn n =  foldl' (flip (Map.update (\x -> Just (x-n) ))) 
-        --applyBtn1  =  foldl' (flip (Map.update (\x -> Just (x-1) )))
-
-        memoBinom x y mp
-            | Just z <- mp Map.!? (x,y) = (z ,mp)
-            | otherwise = (z',mp')
-            where
-                z' = binomialC x y
-                mp' = Map.insert (x,y) z' mp
-
---        memoBinom x y mp
---            | y <= 0 = (1,mp)
---            | Just z <- mp Map.!? (x,y) = (z ,mp)
---            | otherwise = (z',mp')
---            where
---                z' = (x `div` y) * fst (memoBinom (x-1) (y-1) mp)
---                mp' = Map.insert (x,y) z' mp
-
-
-   --     memoBinom x y mp =  (binomialC x y, mp) -- Dummy memoization to compare
-
-        mapBinom' (acc,mp) (x,y,z) = ((x,w) : acc, mp')
-            where
-                (w,mp') = memoBinom (y+z-1) (z-1) mp
-
-        mapBinom mp = foldl' mapBinom' ([],mp) 
+        applyBtn1  =  foldl' (flip (Map.update (\x -> Just (x-1) )))
 
         -- Get dimensions from most constrained to least
 
@@ -178,7 +154,7 @@ solve2 plrs = -- @@
         costs0 jm bs =  map (\(idx,dof) -> (idx,  fromMaybe 0 (jm Map.!? idx), dof)) $ grps bs         
 
         -- Sort costs using memo-ized choice function
-        costs jm bs mc =  first (sortOn fst) $ mapBinom mc $ costs0 jm bs
+        costs jm bs = sortOn snd $ map (\(x,y,z) -> (x,binomialC (y+z-1) (z-1))) $ costs0 jm bs
 
         splitMatchesWith f g xs = (map g $ filter f xs, filter (not . f) xs)
 
@@ -200,63 +176,55 @@ solve2 plrs = -- @@
         
         isSoln = all (==0)
 
---dfsMem :: (a -> Int -> b -> ([a], b)) -> (a -> b -> Bool) -> [a] -> b -> (Maybe (a, Int), b)
+        --dfsMem :: (a -> Int -> b -> ([a], b)) -> (a -> b -> Bool) -> [a] -> b -> (Maybe (a, Int), b)
         
-        dfsf0 (jm,k, [],css, csta) _ (cstm,mc)
-            | isSoln jm = ([],(min csta cstm,mc))
-            | fromMaybe 1 (jm Map.!? k) /= 0 = ([],(cstm,mc))
-            | null cs' = ([], (cstm,mc))
-            | otherwise = ([(jm,k',cs',css', csta)],(cstm,mc))
+        dfsf0 (jm,k, [],css, csta) _ cstm
+            | isSoln jm = ([],min csta cstm)
+            | fromMaybe 1 (jm Map.!? k) /= 0 = ([],cstm)
+            | null cs' = ([], cstm)
+            | otherwise = ([(jm,k',cs',css', csta)],cstm)
             --{-traceShow ("next Key",k',jm,cs',css') $-} recu jm k' cs' css' mc'
             where 
-                (k', cs' , css', mc') =  bestSearch jm css mc
+                (k', cs' , css') =  bestSearch jm css
 
         dfsf0 (jm,k, [b],css, csta) _ mc = ([(jm', k, [], css, n + csta)],mc) -- Constrained choice, take greedily, see if it's enough
             where 
                 jm' = applyBtn n jm b
                 n = greedyN b jm
 
-        dfsf0 (jm,k, b:bs,css, csta) _ (cstm, mc)
-            | cstm < csta = ([],(cstm,mc))
-            | any(<0) jm = ([],(cstm,mc))
-            | otherwise =  {-trace "P2" $-} (childs, (cstm, mc))
+        dfsf0 (jm,k, b:b':bs,css, csta) _ cstm
+            | cstm < csta = ([],cstm)
+            | any(<0) jm = ([],cstm)
+            | otherwise =  {-trace "P2" $-} (childs, cstm)
             where 
-                jm' m = applyBtn m jm b
-                n = greedyN b jm
-                childs = map (\m' -> (jm' m',k,bs,css,m'+csta)) [0..n]
-
-
+                jm0 = applyBtn1 jm b
+                jm1 = applyBtn1 jm b'
+                csta' = 1 + csta
+               -- n = greedyN b jm
+                childs =  [(jm,k,bs,css,csta),(jm1,k,b':bs,css,csta'),(jm0,k,b:b':bs,css, csta')]--map (\m' -> (jm' m',k,bs,css,m'+ csta)) [0..n]
 
         dfsf1 _ _ = False
  
         -- css =  [btns]
-        bestSearch jm [] mc = (0,[],[],mc)
-        bestSearch jm [b] mc = (head b,[b],[],mc)
+        bestSearch jm [] = (0,[],[])
+        bestSearch jm [b] = (head b,[b],[])
 
-        bestSearch jm bs mc = (k,sortOn length bs',cs,mc') -- put the largest button last (the last in the set is explored greedily first)
+        bestSearch jm bs= (k,sortOn (Down . length) bs',cs) -- put the largest button last (the last in the set is explored greedily first)
             where
-                (csts, mc') = costs jm bs mc
+                csts = costs jm bs
                 k =  fst $ head csts
                 (bs',cs) = splitMatchesWith (elem k) id bs
 
-        
---        doSrch mc plr = traceShow (plr,ans) (mc'', ans)
---            where
---                jm = jToM $ jltg plr
---                bs = btns plr
---                (k,bs', cs, mc' ) = bestSearch jm bs mc
---                (ans,mc'') = recu jm k bs' cs mc'
---
-        doSrch mc plr = traceShow (plr,ans) (mc'', ans)
+        doSrch plr = traceShow (plr,ans) ans
             where
                 jm = jToM $ jltg plr
                 bs = btns plr
-                (k,bs', cs, mc' ) = bestSearch jm bs mc
-                (_,(ans,mc'')) =  dfsMem dfsf0 dfsf1 [(jm, k, bs', cs,0)] (999999999999,mc')
+                (k,bs', cs) = bestSearch jm bs
+                (_,ans) =  dfsMem dfsf0 dfsf1 [(jm, k, bs', cs,0)] 999999999999
 
-        mapSrch = foldl' (\(mp,acc) x -> second (:acc) $ doSrch mp x ) (Map.empty,[])
+        mapSrch = foldl' (\acc x -> doSrch x : acc ) []
     in
-        Just $ sum $ snd $ mapSrch plrs
+        Just $ sum $ mapSrch plrs
 
 
 solveDebug :: [ParseLineResult] ->  IO()
