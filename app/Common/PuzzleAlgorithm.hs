@@ -124,7 +124,7 @@ aStarMultSrc ng heur sts nd =
       astarDo ass =
         case SList.uncons $ astarActv ass of
           Nothing -> ass
-          Just ((wt, dst, x), tl) -> tryBestActv x wt dst tl ass
+          Just ((wt, dst, x), tl) -> tryBestActv x wt dst tl ass 
 
       (actv0,mem0) = first SList.toSortedList $ caBuild Map.empty sts
    in 

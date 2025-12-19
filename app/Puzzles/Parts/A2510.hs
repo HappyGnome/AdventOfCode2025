@@ -176,51 +176,27 @@ solve2 plrs = -- @@
         
         isSoln = all (==0)
 
-        --dfsMem :: (a -> Int -> b -> ([a], b)) -> (a -> b -> Bool) -> [a] -> b -> (Maybe (a, Int), b)
-        
-        dfsf0 (jm,k, [],css, csta) _ cstm
-            | isSoln jm = ([],min csta cstm)
-            | fromMaybe 1 (jm Map.!? k) /= 0 = ([],cstm)
-            | null cs' = ([], cstm)
-            | otherwise = ([(jm,k',cs',css', csta)],cstm)
-            --{-traceShow ("next Key",k',jm,cs',css') $-} recu jm k' cs' css' mc'
-            where 
-                (k', cs' , css') =  bestSearch jm css
+        -- aStar :: (Ord a, Ord b, Num b) => (a -> b -> [(a, b)]) -> (a -> b) -> (a, b) -> ((a, b) -> Bool) -> Map.Map a b
 
-        dfsf0 (jm,k, [b],css, csta) _ mc = ([(jm', k, [], css, n + csta)],mc) -- Constrained choice, take greedily, see if it's enough
+        astarf0 bs jm csta
+            | any(<0) jm = []
+            | otherwise =  {-trace "P2" $-} childs
             where 
-                jm' = applyBtn n jm b
-                n = greedyN b jm
-
-        dfsf0 (jm,k, b:b':bs,css, csta) _ cstm
-            | cstm < csta = ([],cstm)
-            | any(<0) jm = ([],cstm)
-            | otherwise =  {-trace "P2" $-} (childs, cstm)
-            where 
-                jm0 = applyBtn1 jm b
-                jm1 = applyBtn1 jm b'
+                jm0 = applyBtn1 jm
                 csta' = 1 + csta
                -- n = greedyN b jm
-                childs =  [(jm,k,bs,css,csta),(jm1,k,b':bs,css,csta'),(jm0,k,b:b':bs,css, csta')]--map (\m' -> (jm' m',k,bs,css,m'+ csta)) [0..n]
+                childs =  map (\b -> (jm0 b,csta')) bs --map (\m' -> (jm' m',k,bs,css,m'+ csta)) [0..n]
 
-        dfsf1 _ _ = False
- 
-        -- css =  [btns]
-        bestSearch jm [] = (0,[],[])
-        bestSearch jm [b] = (head b,[b],[])
+        astarf1 = maximum 
 
-        bestSearch jm bs= (k,sortOn (Down . length) bs',cs) -- put the largest button last (the last in the set is explored greedily first)
-            where
-                csts = costs jm bs
-                k =  fst $ head csts
-                (bs',cs) = splitMatchesWith (elem k) id bs
+        astarf2 (mp,_) = isSoln mp
 
         doSrch plr = traceShow (plr,ans) ans
             where
                 jm = jToM $ jltg plr
                 bs = btns plr
-                (k,bs', cs) = bestSearch jm bs
-                (_,ans) =  dfsMem dfsf0 dfsf1 [(jm, k, bs', cs,0)] 999999999999
+                mans =  aStar (astarf0 bs) astarf1 (jm,0) astarf2
+                ans = (Map.!) mans $ head $ Map.keys $ Map.filterWithKey (curry astarf2) mans
 
         mapSrch = foldl' (\acc x -> doSrch x : acc ) []
     in
