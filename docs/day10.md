@@ -37,3 +37,7 @@ For each machine, what is the minimal linear combination (in the same sense) tha
 
 
 This is obviously justy a sketch not a whole algorithm!
+
+![Very Slow](images\Day10_opt_needed.png)
+
+More work needed to find a good approach. Maybe an `A*` algorithm using the simplex method to make the heuristics? Better start building a little sparse linear algebra library...
