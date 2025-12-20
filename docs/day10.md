@@ -31,12 +31,11 @@ For each machine, what is the minimal linear combination (in the same sense) tha
         * A.k.a the number of ways to make `Mx` as a sum of `Nx` distinguishable positive integers
         * See [throwing balls into boxes](https://en.wikipedia.org/wiki/Balls_into_bins_problem)
     4. The *Active index* is any of the coordinates with the lowest (non-zero) degrees of freedom
-    4. Start a phase of the search, just trying combinations of vectors containing the *Active index*
-    5. For the last vector searched in a phase, we are constrained to take its coefficient to make sure the target at the active index is met. If this is not possible without violating the other target constraints then we can terminate a branch of the search.
-    6. If the target constraint at the *Active index* is made, start a new phase, finding the coordinate with the fewest degrees of freedom after subtracting the current coeficients at the search site.
+    5. Start a phase of the search, just trying combinations of vectors containing the *Active index*
+    6. For the last vector searched in a phase, we are constrained to take its coefficient to make sure the target at the active index is met. If this is not possible without violating the other target constraints then we can terminate a branch of the search.
+    7. If the target constraint at the *Active index* is made, start a new phase, finding the coordinate with the fewest degrees of freedom after subtracting the current coeficients at the search site.
 
-
-This is obviously justy a sketch not a whole algorithm!
+This is obviously just a sketch not a whole algorithm!
 
 ![Very Slow](images/Day10_opt_needed.png)
 
