@@ -17,7 +17,7 @@ In the pages linked below are some brief discussions of the key points of the pr
 * [Day 8](docs/day8.md) - it's beginning to look a lot like....
 * [Day 9](docs/day9.md) - wind up
 * [Day 10](docs/day10.md) - still thinking
-* [Day 11](docs/day11.md) - Writeup TODO
+* [Day 11](docs/day11.md) - let me count the ways
 * [Day 12](docs/day12.md) - Writeup TODO
 
 # Project structure
