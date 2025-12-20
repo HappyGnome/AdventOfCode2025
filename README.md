@@ -18,7 +18,15 @@ In the pages linked below are some brief discussions of the key points of the pr
 * [Day 9](docs/day9.md) - wind up
 * [Day 10](docs/day10.md) - still thinking
 * [Day 11](docs/day11.md) - let me count the ways
-* [Day 12](docs/day12.md) - Writeup TODO
+* [Day 12](docs/day12.md) - the final pieces
+
+# Conclusions
+* Thanks to everyone at Advent Of Code for setting these puzzles and making a fun website for them :-)
+* Thanks [Depot](https://depot.dev/events/advent-of-code-2025-leaderboard) for hosting a leaderboard.
+* The cut-down 12 day format is more civilised for this time of year (especially if the puzzles come out at a bad time in your timezone).
+* There's still more to think about to get a nice solution for day 10.
+* Merry Christmas!
+
 
 # Project structure
 * `NextPuzzle.bat/NextPuzzle.ps1` Used to update the `cabal` and `Main.hs` files each day (run the `.bat`)
