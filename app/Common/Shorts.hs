@@ -441,7 +441,7 @@ consAt k v =
 -- | Create a map from a list of key-value pairs, but there may be duplicate keys
 toMapCons :: (Ord a) => [(a,b)] -> Map.Map a [b] 
 toMapCons = 
-    foldl (\mp (x,y) -> consAt x y mp) Map.empty
+    foldl' (\mp (x,y) -> consAt x y mp) Map.empty
 
 -------------------------------------------------------
 binomialC :: (Integral a) => a -> a -> a

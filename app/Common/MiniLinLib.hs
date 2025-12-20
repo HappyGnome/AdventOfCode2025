@@ -173,6 +173,33 @@ instance (Subbable a, Real c, Normed1 a c, Num a) => Normed1 (V3 a) c where
 -- 3D methods
 
 
+------------------------------------------------------------------------------------------
+--
+data (Ord j, Ord k) => SparseTable j k a = SparseTable {stRows :: Map.Map j (Set.Set k), stCols :: Map.Map k (Set.Set j), stValues :: Map.Map (j,k) a } deriving (Show, Eq)
+
+fromList :: (Ord j, Ord k) => [(j,k,a)] -> SparseTable j k a
+fromList ls =
+    let
+        values = Map.fromList $ map (\(x,y,z) -> ((x,y),z)) ls
+        keysC = map Set.fromList $ toMapCons $ map swap $ Map.keys values
+        keysR = map Set.fromList $ toMapCons $ Map.keys values
+
+    in
+        SparseTable cols rows values
+
+
+insert :: (Ord j, Ord k) => j -> k -> a -> SparseTable j k a -> SparseTable j k a
+insert j k a (SparseTable rows cols values) = 
+    let
+        values' = Map.insert (j,k) a values 
+        rows' = Map.alter (maybe (Just $ Set.fromList [k]) (Just . Set.insert k)) j rows
+        cols' = Map.alter (maybe (Just $ Set.fromList [j]) (Just . Set.insert j)) k cols 
+    in
+        SparseTable rows' cols' values'
+
+
+
+
 
 
 
