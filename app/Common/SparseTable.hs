@@ -181,11 +181,32 @@ union (SparseTable rows cols values) (SparseTable rows' cols' values') =
     in
         SparseTable rows'' cols'' values''
 
--- | Union with an operation on duplicates
-unionWith :: (Ord j, Ord k) => (a -> a -> a) -> SparseTable j k a -> SparseTable j k a -> SparseTable j k a
+-- | Union with an operation called for each key (row,col) in the union. 
+-- The first argument is never called with Nothing Nothing
+unionWith :: (Ord j, Ord k) => (Maybe a -> Maybe b -> c) -> SparseTable j k a -> SparseTable j k b -> SparseTable j k c
 unionWith f (SparseTable rows cols values) (SparseTable rows' cols' values') = 
     let
-        values'' = Map.unionWith f values values'
+        valuesR = Map.difference values' values
+        valuesL = Map.foldlWithKey (\acc ky v -> Map.insert ky (f (Just v) (values' Map.!? ky)) acc) Map.empty values
+        
+        values'' = Map.union valuesL $ Map.map (f Nothing . Just) valuesR
+
+        rows'' = Map.unionWith (Set.union) rows rows'
+
+        cols'' = Map.unionWith (Set.union) cols cols'
+
+    in
+        SparseTable rows'' cols'' values''
+--
+-- | Union with an operation called for each key (row,col) in the first table. 
+-- The first argument is never called with Nothing Nothing
+unionWithL :: (Ord j, Ord k) => (a -> Maybe a -> a) -> SparseTable j k a -> SparseTable j k a -> SparseTable j k a
+unionWithL f (SparseTable rows cols values) (SparseTable rows' cols' values') = 
+    let
+        valuesR = Map.difference values' values
+        valuesL = Map.foldlWithKey (\acc ky v -> Map.insert ky (f (Just v) (values' Map.!? ky)) acc) Map.empty values
+        
+        values'' = Map.union valuesL $ valuesR
 
         rows'' = Map.unionWith (Set.union) rows rows'
 
@@ -194,9 +215,38 @@ unionWith f (SparseTable rows cols values) (SparseTable rows' cols' values') =
     in
         SparseTable rows'' cols'' values''
 
+
+
 map :: (Ord j, Ord k) => (a -> b) -> SparseTable j k a -> SparseTable j k b
 map f st = st {stValues = Map.map f $ stValues st}
 
+filter :: (Ord j, Ord k) => (a->Bool) -> SparseTable j k a -> SparseTable j k b
+filter f (SparseTable rows cols values) =
+    let
+        values' = Map.filter f values
+        keysRem = Map.keys $ Map.difference values values'
+
+        remRow r (x,y) = Map.update (Set.delete y) x r
+        remCol c (x,y) = Map.update (Set.delete x) y c
+
+        (rows',cols') = foldl (\(r,c) xy -> (remRow r xy, remCol c xy) ) (rows,cols) keysRem
+
+    in
+        SparseTable rows' cols' values'
+
+filterWithKey :: (Ord j, Ord k) => (j -> k -> a->Bool) -> SparseTable j k a -> SparseTable j k b
+filterWithKey f (SparseTable rows cols values) =
+    let
+        values' = Map.filterWithKey (uncurry f) values
+        keysRem = Map.keys $ Map.difference values values'
+
+        remRow r (x,y) = Map.update (Set.delete y) x r
+        remCol c (x,y) = Map.update (Set.delete x) y c
+
+        (rows',cols') = foldl (\(r,c) xy -> (remRow r xy, remCol c xy) ) (rows,cols) keysRem
+
+    in
+        SparseTable rows' cols' values'
 
 -----------------------------------------------------------------------
 -- Reshaping
@@ -243,13 +293,11 @@ transpose (SparseTable rows cols values) =
 -- Row / Column ops
 --
 
-updateAt :: (Ord j, Ord k, Foldable t) => (a -> a) -> t (j,k) ->  SparseTable j k a -> SparseTable j k a
-updateAt f ls st =
-    let
-        values = stValues st
-        values' cs = foldl (\acc x -> update f x acc) values ls
-    in
-        st { stValues = values' }
+updateAt :: (Ord j, Ord k, Foldable t) => (a -> Maybe a) -> t (j,k) ->  SparseTable j k a -> SparseTable j k a
+updateAt f ls st = foldl (update f) st ls
+
+alterAt :: (Ord j, Ord k, Foldable t) => (Maybe a -> Maybe a) -> t (j,k) ->  SparseTable j k a -> SparseTable j k a
+alterAt f ls st = foldl (alter f) st ls
 
 alterCol :: (Ord j, Ord k) => (a -> a) -> k ->  SparseTable j k a -> SparseTable j k a
 alterCol f y st =
@@ -284,21 +332,44 @@ swapCols y0 y1 st =
             | otherwise = y
     in
         mapColKeys swap st -- It would be faster to implement this directly (no need to visit all elements)
-        
 
---TODO
-lcCols :: (Ord j, Ord k) => k -> k -> (Maybe a -> Maybe a -> Maybe a) -> SparseTable j k a -> SparseTable j k a
-lcCols from to f (SparseTable rows cols values) = 
+getCol :: (Ord j, Ord k) => k ->  SparseTable j k a -> SparseTable j k a
+getCol y = filterWithKey (\_ y' _ -> y' == y) st
+        
+getRow :: (Ord j, Ord k) => j ->  SparseTable j k a -> SparseTable j k a
+getRow x = filterWithKey (\x' _ _ -> x' == x) st
+
+combineCols :: (Ord j, Ord k) => k -> k -> (a -> Maybe a -> a) -> SparseTable j k a -> SparseTable j k a
+combineCols from to f st = 
     let 
-       updRows y = Set.toList $ fromMaybe Set.empty $ cols Map.!? y
-
-       updFrom = Map.fromList $ map (\x -> (x, (Just $ values Map.! (x,from),Nothing))) $ updRows from
-       updTo = Map.fromList $ map (\x -> (x, Nothing, (Just $ values Map.! (x,to)))) $ updRows to
-
-       upd = Map.unionWith (\ (a,b) (c,d) -> (a,d)) updFrom updTo
-       upd' = Map.map (uncurry f) upd
-    
-       
-        
+        col = mapColKeys (const to) $ getCol from st
     in
-       foldl ()  rowsFrom
+        unionWithL f col st
+
+combineRows :: (Ord j, Ord k) => j -> j -> (a -> Maybe a -> a) -> SparseTable j k a -> SparseTable j k a
+combineRows from to f st = 
+    let 
+        row = mapRowKeys (const to) $ getRow from st
+    in
+        unionWithL f row st
+
+--------------------------------------------------------------------------------------
+-- Matrix ops
+
+-- Mult
+--
+{-
+mult :: (Ord j, Ord k) => (a -> a -> a) -> SparseTable j k a -> SparseTable j k a
+mult 
+--WIP
+-}
+
+
+-- LUP decomp
+--
+
+-- Solve
+--
+
+
+
